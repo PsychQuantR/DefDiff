@@ -35,3 +35,8 @@ jf(c(1, 2, 3))                       # 2x3 Jacobian
 
 See `NEWS.md` for the capability set. Correctness is verified against
 `numDeriv`; the test suite includes relative-speed benchmarks.
+
+---
+
+This repository is a **published mirror** of the installable package, generated
+from a private source-of-truth repo. Do not open PRs here; file issues instead.
