@@ -9,19 +9,19 @@
 ## internal helpers; no external input flows through eval().
 
 test_that("Phase 6: finalizer invokes pullback for a real walker shim", {
-  walker_result <- dat:::.grad_inner(quote(v * v), "v")
+  walker_result <- DefDiff:::.grad_inner(quote(v * v), "v")
   # Post-Phase-6: no _legacy field, pullback is the only path.
   expect_false("_legacy" %in% names(walker_result))
   expect_true(!is.null(walker_result$pullback))
-  out <- dat:::.finalize_reduction_grad(walker_result, quote(v * v))
+  out <- DefDiff:::.finalize_reduction_grad(walker_result, quote(v * v))
   expect_true(is.call(out))  # Returns an AST, not a value
 })
 
 test_that("Phase 6: finalized pullback evaluates to the correct gradient", {
-  walker_result <- dat:::.grad_inner(quote(v * v), "v")
-  grad_ast <- dat:::.finalize_reduction_grad(walker_result, quote(v * v))
-  # SAFETY: eval is intentional — grad_ast comes from dat:::.grad_inner +
-  # dat:::.finalize_reduction_grad (trusted internal helpers). No external
+  walker_result <- DefDiff:::.grad_inner(quote(v * v), "v")
+  grad_ast <- DefDiff:::.finalize_reduction_grad(walker_result, quote(v * v))
+  # SAFETY: eval is intentional — grad_ast comes from DefDiff:::.grad_inner +
+  # DefDiff:::.finalize_reduction_grad (trusted internal helpers). No external
   # input passes through. env is restricted to baseenv() + test-bound v.
   env <- new.env(parent = baseenv())
   env$v <- c(1, 2, 3)
@@ -31,8 +31,8 @@ test_that("Phase 6: finalized pullback evaluates to the correct gradient", {
 test_that("Phase 6: finalizer errors when shim has NULL pullback", {
   walker_result <- list(value = quote(v), pullback = NULL)
   expect_error(
-    dat:::.finalize_reduction_grad(walker_result, quote(v)),
-    class = "dat_not_definable"
+    DefDiff:::.finalize_reduction_grad(walker_result, quote(v)),
+    class = "DefDiff_not_definable"
   )
 })
 
@@ -41,8 +41,8 @@ test_that("Phase 6: finalizer passes through bare AST unchanged (defensive)", {
   # remains defensive so custom `extend_language()`-registered generators
   # returning bare ASTs continue to work.
   bare <- quote(cos(v))
-  expect_identical(dat:::.finalize_reduction_grad(bare, quote(sin(v))), bare)
-  expect_identical(dat:::.finalize_reduction_grad(0, quote(v)), 0)
+  expect_identical(DefDiff:::.finalize_reduction_grad(bare, quote(sin(v))), bare)
+  expect_identical(DefDiff:::.finalize_reduction_grad(0, quote(v)), 0)
 })
 
 test_that("Phase 6: identity-pullback shim recovers rep(1, length(value))", {
@@ -51,8 +51,8 @@ test_that("Phase 6: identity-pullback shim recovers rep(1, length(value))", {
   # the correct gradient of sum(v).
   shim <- list(
     value = quote(v),
-    pullback = dat:::.make_pullback_identity()
+    pullback = DefDiff:::.make_pullback_identity()
   )
-  out <- dat:::.finalize_reduction_grad(shim, quote(v))
+  out <- DefDiff:::.finalize_reduction_grad(shim, quote(v))
   expect_identical(out, bquote(rep(1, length(v))))
 })

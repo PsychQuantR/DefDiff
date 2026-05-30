@@ -1,7 +1,7 @@
 ## test-rep-generator.R
 ## Tier 4 change `add-rep-generator`: rep() registered as L_0 data primitive.
 ## When first arg doesn't contain v, rep produces a constant vector (gradient
-## = 0). When first arg contains v, raise dat_not_definable.
+## = 0). When first arg contains v, raise DefDiff_not_definable.
 
 skip_if_no_fast <- function() {
   if (!.fast_path_available()) skip("macOS fast-path required")
@@ -34,10 +34,10 @@ test_that("logistic_loss with inlined labels matches analytic gradient", {
 
 # ---- Variable first-argument cases (rejected) ----
 
-test_that("rep(v, 3) raises dat_not_definable naming rep", {
+test_that("rep(v, 3) raises DefDiff_not_definable naming rep", {
   expect_error(
     grad(function(v) sum(rep(v, 3))),
-    class = "dat_not_definable",
+    class = "DefDiff_not_definable",
     regexp = "rep"
   )
 })
@@ -47,7 +47,7 @@ test_that("rep(v + 1, 3) — variable inside first-arg expression — raises", {
   # is literally the variable symbol. v+1 contains v, so this rejects.
   expect_error(
     grad(function(v) sum(rep(v + 1, 3))),
-    class = "dat_not_definable",
+    class = "DefDiff_not_definable",
     regexp = "rep"
   )
 })
@@ -70,8 +70,8 @@ test_that("rep rule fires for top-level call too (catalog lookup, not sum-only)"
   # .sum_rule's walker fallback. We can't grad(rep(...)) standalone because
   # the output is a vector and DD requires scalar output, but the catalog
   # lookup itself returns a non-error rule.
-  expect_true(is.function(dat:::.dat_env$catalog$L_0[["rep"]]))
+  expect_true(is.function(DefDiff:::.dat_env$catalog$L_0[["rep"]]))
   # And the rule returns 0 when called directly with a constant first arg:
-  rule <- dat:::.dat_env$catalog$L_0[["rep"]]
+  rule <- DefDiff:::.dat_env$catalog$L_0[["rep"]]
   expect_identical(rule(quote(rep(5, 3)), "v"), 0)
 })

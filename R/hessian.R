@@ -38,7 +38,7 @@ hessian <- function(x, vars = NULL, ...) {
 #' @rdname hessian
 hessian.default <- function(x, vars = NULL, ...) {
   .dat_stop(
-    "dat_not_definable",
+    "DefDiff_not_definable",
     paste0("hessian() does not have a method for class ",
            paste(class(x), collapse = "/"))
   )
@@ -52,7 +52,7 @@ hessian.function <- function(x, vars = NULL, ...) {
   body_expr <- body(x)
   blocker <- .control_flow_block(body_expr)
   if (!is.na(blocker)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("Function body contains unsupported construct `", blocker,
                      "`; only straight-line scalar expressions are supported."))
   }
@@ -65,7 +65,7 @@ hessian.function <- function(x, vars = NULL, ...) {
       # Jacobian-of-gradient walker (add-hessian-recursive-walker). It raises
       # hessian_not_supported when the gradient is computable but its shape is
       # outside the recognized rules, and propagates the grad engine's condition
-      # (dat_not_definable / dat_unknown_generator) when the gradient itself is
+      # (DefDiff_not_definable / DefDiff_unknown_generator) when the gradient itself is
       # unsupported.
       hexpr <- .hessian_recursive(body_expr, vars)
     } else {

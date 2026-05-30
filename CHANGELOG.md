@@ -1,12 +1,21 @@
 # Changelog
 
-All notable changes to the `dat` package are documented here.
+All notable changes to the `DefDiff` package are documented here.
 Format loosely follows Keep a Changelog; entries reference their Spectra change.
 
 ## [Unreleased]
 
 ### Changed
 
+- **Renamed the package `dat` -> `DefDiff`** (Definable Differentiation) and the
+  public mirror repo `definable-calculus-r` -> `DefDiff`. The old name `dat` came
+  from Definable Algebra **Theory** but the package only implements the
+  **differentiation** slice, so the name now matches what it does (and reads as a
+  searchable word, unlike a bare acronym). User-facing surface renamed —
+  `library(DefDiff)`, the `DefDiff.metal_threshold` option, and the
+  `DefDiff_not_definable` / `DefDiff_verify_result` condition/result classes;
+  internal dot-prefixed helpers keep their `.dat_*` names. GitHub keeps a redirect
+  so old `install_github("PsychQuantR/definable-calculus-r")` URLs still work.
 - **Package hygiene.** Removed 4 stale `inst/benchmarks/*.bak` backup files
   (they were git-tracked and shipped to users via `inst/`). Trimmed the
   installable package: only `inst/benchmarks/real_world_patterns.R` (a test
@@ -14,7 +23,7 @@ Format loosely follows Keep a Changelog; entries reference their Spectra change.
   scripts stay in the repo but are `.Rbuildignore`d. Documented the local-only
   `references/` (PyTorch/JAX AD baselines, gitignored) in `CLAUDE.md`.
 - **Version 0.1.0** (first minor release) + first `NEWS.md`. Package builds and
-  installs cleanly (`R CMD build` + `R CMD INSTALL`; `library(dat)` works).
+  installs cleanly (`R CMD build` + `R CMD INSTALL`; `library(DefDiff)` works).
   `src/Makevars` uses `CXX_STD = CXX17` instead of a literal `-std=c++17` flag.
 
 ### Fixed

@@ -6,7 +6,7 @@
 ## OUT-OF-SCOPE patterns: assert the specific error condition class fires —
 ## locks the boundary so a future Tier 4 extension can flip the assertion.
 
-source_path <- system.file("benchmarks", "real_world_patterns.R", package = "dat")
+source_path <- system.file("benchmarks", "real_world_patterns.R", package = "DefDiff")
 if (!nzchar(source_path) || !file.exists(source_path)) {
   source_path <- file.path("..", "..", "inst", "benchmarks", "real_world_patterns.R")
 }
@@ -57,7 +57,7 @@ test_that("Phase 4: logistic_loss gradient matches analytic (Tier 4 add-rep-gene
 test_that("Phase 4: softmax_entropy gradient matches analytic (Tier 4 close-top-level-division-gap)", {
   skip_if_no_real_world()
   skip_if_not(.fast_path_available(), "macOS fast-path required")
-  # Pre-Tier-4 this raised dat_not_definable for top-level a/b with v in
+  # Pre-Tier-4 this raised DefDiff_not_definable for top-level a/b with v in
   # denominator. close-top-level-division-gap rewrote the L_0 `/` rule to
   # construct the quotient rule inline using .grad_expr for sub-derivatives,
   # so this expression now produces the analytic softmax entropy gradient.

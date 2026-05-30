@@ -40,8 +40,8 @@ test_that("multi-variable block Hessian is symmetric across blocks", {
 })
 
 test_that("normalize_fast_kernels is value-preserving on a quotient gradient AST", {
-  ga <- dat:::.grad_expr(quote(sum(v * exp(v)) / sum(exp(v))), "v")
-  na <- dat:::.normalize_fast_kernels(ga)
+  ga <- DefDiff:::.grad_expr(quote(sum(v * exp(v)) / sum(exp(v))), "v")
+  na <- DefDiff:::.normalize_fast_kernels(ga)
   vv <- c(0.5, 0.8, 1.2)
   expect_false(any(grepl("fast_", all.names(na))))
   # NOTE: eval() here numerically evaluates gradient ASTs the dat package itself

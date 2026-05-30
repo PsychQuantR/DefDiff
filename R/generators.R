@@ -57,8 +57,8 @@
       da <- .grad_expr(a, var)
       db <- .grad_expr(b, var)
       bquote((.(da) * as.numeric(.(b)) - as.numeric(.(a)) * .(db)) / as.numeric(.(b))^2)
-    }, dat_unknown_generator = function(e) {
-      .dat_stop("dat_unknown_generator",
+    }, DefDiff_unknown_generator = function(e) {
+      .dat_stop("DefDiff_unknown_generator",
                 paste0("Top-level division ", deparse(expr),
                        " contains unrecognized generator: ",
                        conditionMessage(e)))
@@ -76,7 +76,7 @@
   .dat_env$catalog$L_0[["rep"]] <- function(expr, var) {
     values <- expr[[2L]]
     if (!.contains_var(values, var)) return(0)
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("rep() with variable-dependent first argument is ",
                      "outside DD's single-variable scalar-output contract; ",
                      "would change output-shape semantics across coordinates."))
@@ -89,7 +89,7 @@
   # crossprod(W %*% v, c)) fire BEFORE catalog lookup via fast-path branches
   # in .sum_rule and .crossprod_rule. Walker-context calls (e.g., the inner
   # of sum(tanh(W %*% v))) hit walker's L_0 fallback miss and raise generic
-  # dat_unknown_generator wrapped to dat_not_definable by .sum_rule.
+  # DefDiff_unknown_generator wrapped to DefDiff_not_definable by .sum_rule.
 }
 
 # ========== L_1: inner product ==========
@@ -139,7 +139,7 @@
 
 .sum_rule <- function(expr, var) {
   if (length(expr) != 2L) {
-    .dat_stop("dat_not_definable", "sum() with multiple arguments is not supported in v0.1.")
+    .dat_stop("DefDiff_not_definable", "sum() with multiple arguments is not supported in v0.1.")
   }
   inner <- .strip_paren(expr[[2L]])
   vsym  <- .as_var(var)
@@ -407,7 +407,7 @@
   # Option B-lite, `add-nn-walker-extension`). Subsumes the single-layer
   # case but only fires for chains that the simpler Option A above didn't
   # already handle (2+ matmuls or anything Option A's narrow shape rejected).
-  # Helper raises dat_not_definable for non-chain shapes; we catch and fall
+  # Helper raises DefDiff_not_definable for non-chain shapes; we catch and fall
   # through to the existing walker path.
   if (is.call(inner)) {
     head_sym <- inner[[1L]]
@@ -417,7 +417,7 @@
     if (is_chain_shape) {
       chain_result <- tryCatch(
         .elementwise_matmul_chain_grad(inner, var),
-        dat_not_definable = function(e) NULL
+        DefDiff_not_definable = function(e) NULL
       )
       if (!is.null(chain_result) && !is.null(chain_result$jacobian)) {
         return(bquote(as.numeric(colSums(.(chain_result$jacobian)))))
@@ -436,8 +436,8 @@
   # the legacy AST when available, else invokes pullback with rep(1, length(value)).
   tryCatch(
     .simplify_ast(.finalize_reduction_grad(.grad_inner(inner, var), inner)),
-    dat_unknown_generator = function(e) {
-      .dat_stop("dat_not_definable",
+    DefDiff_unknown_generator = function(e) {
+      .dat_stop("DefDiff_not_definable",
                 paste0("sum(", deparse(inner),
                        ") contains unrecognized generator: ", conditionMessage(e)))
     }
@@ -454,7 +454,7 @@
       return(bquote(2 * t(.(A)) %*% (.(A) %*% .(.as_var(var)))))
     }
     if (!.contains_var(a, var)) return(0)
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("crossprod(", deparse(a), ") not in v0.1 catalog."))
   }
 
@@ -551,8 +551,8 @@
   product_expr <- bquote(.(a) * .(b))
   tryCatch(
     .simplify_ast(.finalize_reduction_grad(.grad_inner(product_expr, var), product_expr)),
-    dat_unknown_generator = function(e) {
-      .dat_stop("dat_not_definable",
+    DefDiff_unknown_generator = function(e) {
+      .dat_stop("DefDiff_not_definable",
                 paste0("crossprod(", deparse(a), ", ", deparse(b),
                        ") contains unrecognized generator: ", conditionMessage(e)))
     }
@@ -565,7 +565,7 @@
 .pow_rule <- function(expr, var) {
   base <- expr[[2L]]; exponent <- expr[[3L]]
   if (.contains_var(exponent, var)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "Variable in exponent position is not in v0.1 catalog.")
   }
   if (!.contains_var(base, var)) return(0)
@@ -583,13 +583,13 @@
   # Registering it here lets level() recognise L_2 expressions.
   .dat_env$catalog$L_2[["%*%"]] <- function(expr, var) {
     .dat_stop(
-      "dat_not_definable",
+      "DefDiff_not_definable",
       "Bare matrix-vector product A %*% v is vector-valued; wrap inside crossprod() or sum() for a scalar gradient."
     )
   }
 
   .dat_env$catalog$L_2[["t"]] <- function(expr, var) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "Bare t() is matrix-valued; wrap inside a scalar reduction.")
   }
 }

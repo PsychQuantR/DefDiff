@@ -1,6 +1,6 @@
 ## test-fast-grad.R
 ## Tier 1 (add-vdsp-fast-path): tests for fast_scalar_mul kernel,
-## dat:::.is_scalar_var_product predicate, dat:::.fast_path_available helper, and
+## DefDiff:::.is_scalar_var_product predicate, DefDiff:::.fast_path_available helper, and
 ## grad.function fast-path dispatch.
 ##
 ## Fast-path tests are macOS-only (vDSP backend); skip elsewhere.
@@ -13,7 +13,7 @@ TOL_VDSP <- 4 * .Machine$double.eps
 
 # add-metal-backend: the canonical Tier 1 `<scalar> * <var>` gradient body is
 # now a runtime metal/vDSP threshold dispatch —
-#   if (.metal_path_available() && length(v) >= getOption("dat.metal_threshold", 1e9L))
+#   if (.metal_path_available() && length(v) >= getOption("DefDiff.metal_threshold", 1e9L))
 #     metal_scalar_mul(s, v) else fast_scalar_mul(s, v)
 # The vDSP (CPU) branch is the `else` arm. This helper returns that arm (or the
 # body itself if it is not threshold-wrapped), so the Tier 1 dispatch assertions
@@ -51,33 +51,33 @@ test_that("fast_scalar_mul matches R `*` on random sweep", {
   expect_lt(max(abs(fast_scalar_mul(2.5, v) - 2.5 * v)), TOL_VDSP)
 })
 
-# ---- dat:::.is_scalar_var_product predicate (Design Behavior 1 / dat-performance
+# ---- DefDiff:::.is_scalar_var_product predicate (Design Behavior 1 / dat-performance
 #      Requirement "AST pattern detection for scalar-variable product") ----
 
-test_that("dat:::.is_scalar_var_product returns TRUE for matching patterns", {
-  expect_true(dat:::.is_scalar_var_product(quote(2 * v), "v"))
-  expect_true(dat:::.is_scalar_var_product(quote(2.5 * x), "x"))
-  expect_true(dat:::.is_scalar_var_product(quote(0 * v), "v"))
+test_that("DefDiff:::.is_scalar_var_product returns TRUE for matching patterns", {
+  expect_true(DefDiff:::.is_scalar_var_product(quote(2 * v), "v"))
+  expect_true(DefDiff:::.is_scalar_var_product(quote(2.5 * x), "x"))
+  expect_true(DefDiff:::.is_scalar_var_product(quote(0 * v), "v"))
 })
 
-test_that("dat:::.is_scalar_var_product returns FALSE for non-matching patterns", {
+test_that("DefDiff:::.is_scalar_var_product returns FALSE for non-matching patterns", {
   # R parser represents unary minus in `-1 * v` as a call (-)(1), not a
   # literal — so this fails the is.numeric check. Deferred to Tier 2 AST
   # normalization.
-  expect_false(dat:::.is_scalar_var_product(quote(-1 * v), "v"))
-  expect_false(dat:::.is_scalar_var_product(quote(v * 2), "v"))
-  expect_false(dat:::.is_scalar_var_product(quote(2 * w), "v"))
-  expect_false(dat:::.is_scalar_var_product(quote(2 + v), "v"))
-  expect_false(dat:::.is_scalar_var_product(quote(2 * v + 1), "v"))
-  expect_false(dat:::.is_scalar_var_product(quote(NA_real_ * v), "v"))
-  expect_false(dat:::.is_scalar_var_product(quote(c(1, 2) * v), "v"))
+  expect_false(DefDiff:::.is_scalar_var_product(quote(-1 * v), "v"))
+  expect_false(DefDiff:::.is_scalar_var_product(quote(v * 2), "v"))
+  expect_false(DefDiff:::.is_scalar_var_product(quote(2 * w), "v"))
+  expect_false(DefDiff:::.is_scalar_var_product(quote(2 + v), "v"))
+  expect_false(DefDiff:::.is_scalar_var_product(quote(2 * v + 1), "v"))
+  expect_false(DefDiff:::.is_scalar_var_product(quote(NA_real_ * v), "v"))
+  expect_false(DefDiff:::.is_scalar_var_product(quote(c(1, 2) * v), "v"))
 })
 
-test_that("dat:::.is_scalar_var_product never raises a condition", {
-  expect_silent(dat:::.is_scalar_var_product(quote(2 * v), "v"))
-  expect_silent(dat:::.is_scalar_var_product(quote(foo(v)), "v"))
-  expect_silent(dat:::.is_scalar_var_product(1, "v"))
-  expect_silent(dat:::.is_scalar_var_product(NULL, "v"))
+test_that("DefDiff:::.is_scalar_var_product never raises a condition", {
+  expect_silent(DefDiff:::.is_scalar_var_product(quote(2 * v), "v"))
+  expect_silent(DefDiff:::.is_scalar_var_product(quote(foo(v)), "v"))
+  expect_silent(DefDiff:::.is_scalar_var_product(1, "v"))
+  expect_silent(DefDiff:::.is_scalar_var_product(NULL, "v"))
 })
 
 # ---- Tier 2a normalizer: .try_normalize_scalar_var_product
@@ -85,7 +85,7 @@ test_that("dat:::.is_scalar_var_product never raises a condition", {
 #      "Fast-path AST normalization for scalar-variable product variants") ----
 
 test_that(".try_normalize_scalar_var_product accepts 10 canonical-equivalent patterns", {
-  norm <- dat:::.try_normalize_scalar_var_product
+  norm <- DefDiff:::.try_normalize_scalar_var_product
   cases <- list(
     list(quote(2 * v),         "v",  2, "v"),
     list(quote(v * 2),         "v",  2, "v"),
@@ -107,7 +107,7 @@ test_that(".try_normalize_scalar_var_product accepts 10 canonical-equivalent pat
 })
 
 test_that(".try_normalize_scalar_var_product returns NULL silently for 10 unrecognized inputs", {
-  norm <- dat:::.try_normalize_scalar_var_product
+  norm <- DefDiff:::.try_normalize_scalar_var_product
   rejects <- list(
     list(quote(2 * w),              "v"),
     list(quote(2 + v),              "v"),
@@ -127,7 +127,7 @@ test_that(".try_normalize_scalar_var_product returns NULL silently for 10 unreco
 })
 
 test_that(".try_normalize_scalar_var_product produces double scalar even for integer literal", {
-  r <- dat:::.try_normalize_scalar_var_product(quote(2L * v), "v")
+  r <- DefDiff:::.try_normalize_scalar_var_product(quote(2L * v), "v")
   expect_false(is.null(r))
   expect_type(r$scalar, "double")
   expect_identical(r$scalar, 2.0)
@@ -136,21 +136,21 @@ test_that(".try_normalize_scalar_var_product produces double scalar even for int
 test_that("strict .is_scalar_var_product unchanged: still rejects normalizer's extra patterns", {
   # Design Behavior 4: Tier 2a does NOT modify the strict predicate's contract.
   # Normalizer accepts these patterns; strict predicate still rejects them.
-  expect_false(dat:::.is_scalar_var_product(quote(v * 2), "v"))      # commutative swap
-  expect_false(dat:::.is_scalar_var_product(quote(v * 2L), "v"))     # commutative + integer
-  expect_false(dat:::.is_scalar_var_product(quote(-(2 * v)), "v"))   # outer negation
-  expect_false(dat:::.is_scalar_var_product(quote(-1 * v), "v"))     # unary-minus literal
+  expect_false(DefDiff:::.is_scalar_var_product(quote(v * 2), "v"))      # commutative swap
+  expect_false(DefDiff:::.is_scalar_var_product(quote(v * 2L), "v"))     # commutative + integer
+  expect_false(DefDiff:::.is_scalar_var_product(quote(-(2 * v)), "v"))   # outer negation
+  expect_false(DefDiff:::.is_scalar_var_product(quote(-1 * v), "v"))     # unary-minus literal
   # Strict canonical still accepted (Tier 1 always supported integer literals via
   # is.numeric() which is TRUE for integer too — that's not Tier 2a-specific)
-  expect_true(dat:::.is_scalar_var_product(quote(2 * v), "v"))
-  expect_true(dat:::.is_scalar_var_product(quote(2L * v), "v"))
+  expect_true(DefDiff:::.is_scalar_var_product(quote(2 * v), "v"))
+  expect_true(DefDiff:::.is_scalar_var_product(quote(2L * v), "v"))
 })
 
-# ---- dat:::.fast_path_available helper (Design Decision 4 / dat-performance
+# ---- DefDiff:::.fast_path_available helper (Design Decision 4 / dat-performance
 #      Requirement "Platform-specific fast-path backend availability") ----
 
-test_that("dat:::.fast_path_available returns TRUE on Darwin", {
-  expect_true(dat:::.fast_path_available())
+test_that("DefDiff:::.fast_path_available returns TRUE on Darwin", {
+  expect_true(DefDiff:::.fast_path_available())
 })
 
 # ---- grad.function fast-path dispatch (Design Behavior 3 / dat-grad-engine
@@ -210,7 +210,7 @@ test_that("grad(function(v) -sum(v^2)) fast-path output equals -2 * v at large s
 #      "Fast-path outer-scalar fusion for composite gradients") ----
 
 test_that(".is_scalar_evaluable accepts recognized forms", {
-  pred <- dat:::.is_scalar_evaluable
+  pred <- DefDiff:::.is_scalar_evaluable
   expect_true(pred(quote(sum(v^2)), "v"))
   expect_true(pred(quote(crossprod(v, v)), "v"))
   expect_true(pred(quote(cos(sum(v^2))), "v"))
@@ -227,7 +227,7 @@ test_that(".is_scalar_evaluable rejects expressions containing variable v in non
   # accepted (degenerate scalar case). The remaining rejection cases are:
   # bare variable, unknown function (not in the recognized list), variable
   # in arithmetic position (not under a scalar reduction).
-  pred <- dat:::.is_scalar_evaluable
+  pred <- DefDiff:::.is_scalar_evaluable
   expect_false(pred(quote(v), "v"))                    # bare variable
   expect_false(pred(quote(foo(sum(v^2))), "v"))        # foo not in whitelist
   expect_false(pred(quote(2 * v), "v"))                # var in arithmetic
@@ -235,7 +235,7 @@ test_that(".is_scalar_evaluable rejects expressions containing variable v in non
 })
 
 test_that(".try_normalize_scalar_var_product_with_outer accepts cos(sum(v^2)) * (2 * v)", {
-  norm <- dat:::.try_normalize_scalar_var_product_with_outer
+  norm <- DefDiff:::.try_normalize_scalar_var_product_with_outer
   r <- norm(quote(cos(sum(v^2)) * (2 * v)), "v")
   expect_false(is.null(r))
   # Tier 2d post-sum_sq substitution: outer_expr has sum(v^2) replaced with
@@ -247,7 +247,7 @@ test_that(".try_normalize_scalar_var_product_with_outer accepts cos(sum(v^2)) * 
 })
 
 test_that("composite normalizer accepts commutative swap on inner (v * 2)", {
-  norm <- dat:::.try_normalize_scalar_var_product_with_outer
+  norm <- DefDiff:::.try_normalize_scalar_var_product_with_outer
   r <- norm(quote(cos(sum(v^2)) * (v * 2)), "v")
   expect_false(is.null(r))
   expect_equal(r$scalar, 2)
@@ -255,14 +255,14 @@ test_that("composite normalizer accepts commutative swap on inner (v * 2)", {
 })
 
 test_that("composite normalizer accepts commutative swap on outer position", {
-  norm <- dat:::.try_normalize_scalar_var_product_with_outer
+  norm <- DefDiff:::.try_normalize_scalar_var_product_with_outer
   r <- norm(quote((2 * v) * cos(sum(v^2))), "v")
   expect_false(is.null(r))
   expect_equal(r$scalar, 2)
 })
 
 test_that("composite normalizer returns NULL for non-composite", {
-  norm <- dat:::.try_normalize_scalar_var_product_with_outer
+  norm <- DefDiff:::.try_normalize_scalar_var_product_with_outer
   expect_null(norm(quote(v * (2 * v)), "v"))
   expect_null(norm(quote(foo(sum(v)) * (2 * v)), "v"))
   expect_null(norm(quote(sin(sum(v^2)) + (2 * v)), "v"))
@@ -336,7 +336,7 @@ test_that("Tier 2c vForce kernels match R stock for all 6 functions", {
 })
 
 test_that("Tier 2c .try_dispatch_elementwise recognizes 6 bare patterns", {
-  pred <- dat:::.try_dispatch_elementwise
+  pred <- DefDiff:::.try_dispatch_elementwise
   for (fn in c("cos", "sin", "exp", "log", "tanh", "sqrt")) {
     e <- call(fn, quote(v))
     r <- pred(e, "v")
@@ -347,7 +347,7 @@ test_that("Tier 2c .try_dispatch_elementwise recognizes 6 bare patterns", {
 })
 
 test_that("Tier 2c .try_normalize_scalar_var_elementwise accepts scaled forms", {
-  norm <- dat:::.try_normalize_scalar_var_elementwise
+  norm <- DefDiff:::.try_normalize_scalar_var_elementwise
   r1 <- norm(quote(2 * cos(v)), "v")
   expect_false(is.null(r1))
   expect_equal(r1$scalar, 2)
@@ -435,7 +435,7 @@ test_that("Tier 2e fast_scalar_div matches R `s / v`", {
 })
 
 test_that("Tier 2e .try_normalize_reciprocal_vforce accepts 1/(2*sqrt(v))", {
-  norm <- dat:::.try_normalize_reciprocal_vforce
+  norm <- DefDiff:::.try_normalize_reciprocal_vforce
   r <- norm(quote(1/(2 * sqrt(v))), "v")
   expect_false(is.null(r))
   expect_equal(r$numerator, 0.5)
@@ -444,19 +444,19 @@ test_that("Tier 2e .try_normalize_reciprocal_vforce accepts 1/(2*sqrt(v))", {
 })
 
 test_that("Tier 2e .try_normalize_reciprocal_vforce rejects non-vForce denom", {
-  norm <- dat:::.try_normalize_reciprocal_vforce
+  norm <- DefDiff:::.try_normalize_reciprocal_vforce
   expect_null(norm(quote(1/(2 * v)), "v"))  # denom is scalar*var, not scalar*vForce
   expect_null(norm(quote(v / 2), "v"))
 })
 
 test_that("Tier 2e .substitute_sum_sq substitutes crossprod(v,v)", {
-  sub_fn <- dat:::.substitute_sum_sq
+  sub_fn <- DefDiff:::.substitute_sum_sq
   out <- sub_fn(quote(cos(crossprod(v, v))), "v")
   expect_equal(out, quote(cos(fast_sum_sq(v))))
 })
 
 test_that("Tier 2e .is_scalar_evaluable accepts arithmetic compositions", {
-  pred <- dat:::.is_scalar_evaluable
+  pred <- DefDiff:::.is_scalar_evaluable
   expect_true(pred(quote(1 - tanh(sum(sin(v)))^2), "v"))
   expect_true(pred(quote(2 * sum(v^2) + 1), "v"))
   # Bare variable in arithmetic position is NOT scalar
@@ -504,7 +504,7 @@ test_that("Tier 3 fast_vec_mul handles empty + length mismatch", {
 })
 
 test_that("Tier 3 .try_normalize_scalar_pow accepts <num>*<var>^<int>", {
-  norm <- dat:::.try_normalize_scalar_pow
+  norm <- DefDiff:::.try_normalize_scalar_pow
   r <- norm(quote(3 * v^2), "v")
   expect_false(is.null(r))
   expect_equal(r$scalar, 3)
@@ -517,7 +517,7 @@ test_that("Tier 3 .try_normalize_scalar_pow accepts <num>*<var>^<int>", {
 })
 
 test_that("Tier 3 .try_normalize_scalar_pow rejects non-matching", {
-  norm <- dat:::.try_normalize_scalar_pow
+  norm <- DefDiff:::.try_normalize_scalar_pow
   expect_null(norm(quote(3 * v), "v"))             # no power
   expect_null(norm(quote(3 * v^2.5), "v"))         # non-integer exponent
   expect_null(norm(quote(3 * v^1), "v"))           # k=1 (just v)
@@ -526,7 +526,7 @@ test_that("Tier 3 .try_normalize_scalar_pow rejects non-matching", {
 })
 
 test_that("Tier 3 .try_normalize_scalar_pow accepts commutative swap", {
-  norm <- dat:::.try_normalize_scalar_pow
+  norm <- DefDiff:::.try_normalize_scalar_pow
   r <- norm(quote(v^2 * 3), "v")
   expect_false(is.null(r))
   expect_equal(r$scalar, 3)

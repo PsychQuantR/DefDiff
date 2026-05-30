@@ -105,7 +105,7 @@ test_that("Matmul output in arithmetic context raises", {
   # rule which raises.
   expect_error(
     grad(function(v) sum((W %*% v) / sum(v))),
-    class = "dat_not_definable",
+    class = "DefDiff_not_definable",
     regexp = "%\\*%"
   )
 })

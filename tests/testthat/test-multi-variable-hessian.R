@@ -18,19 +18,19 @@ TOL_ND    <- 1e-5
 # ===== (1) Generalized walker helpers (all_vars-aware) =====
 
 test_that(".hess_shape with all_vars classifies other vector variables as vector, not scalar", {
-  shp <- function(e) dat:::.hess_shape(e, "v", c("v", "w"))
+  shp <- function(e) DefDiff:::.hess_shape(e, "v", c("v", "w"))
   expect_identical(shp(quote(w)), "vector_grain")        # other vector var, not scalar
   expect_identical(shp(quote(v)), "vector_grain")        # diff var
   expect_identical(shp(quote(v * w)), "vector_grain")    # vector*vector Hadamard
   expect_identical(shp(quote(rep(1, length(v)))), "vector_grain")  # constant vector
   # var-free genuine scalar constant stays scalar
-  expect_identical(dat:::.hess_shape(quote(k), "v", c("v", "w")), "scalar")
+  expect_identical(DefDiff:::.hess_shape(quote(k), "v", c("v", "w")), "scalar")
 })
 
 test_that(".jacobian_inner emits a rectangular zero block for a constant w.r.t. the diff var", {
   # grad-shaped expr `w` (other var) differentiated w.r.t. v -> zero matrix
   # n_v rows x n_v cols (length of the expr x length of diff var).
-  J <- dat:::.jacobian_inner(quote(w), "v", c("v", "w"))
+  J <- DefDiff:::.jacobian_inner(quote(w), "v", c("v", "w"))
   v <- c(1, 2, 3); w <- c(4, 5, 6)
   M <- eval(J)
   expect_equal(M, matrix(0, 3, 3), tolerance = TOL_EXACT)
@@ -38,7 +38,7 @@ test_that(".jacobian_inner emits a rectangular zero block for a constant w.r.t. 
 
 test_that(".hess_diag handles a vector-grain Hadamard product via the product rule", {
   # d/dv (v * w) per coordinate = w (w constant w.r.t. v)
-  d <- dat:::.hess_diag(quote(v * w), "v", c("v", "w"))
+  d <- DefDiff:::.hess_diag(quote(v * w), "v", c("v", "w"))
   v <- c(1, 2); w <- c(3, 4)
   expect_equal(eval(d), c(3, 4), tolerance = TOL_EXACT)
 })
@@ -113,7 +113,7 @@ test_that("three-variable function returns a 3x3 block grid matching numDeriv", 
 test_that("unsupported generator in a per-variable gradient propagates the grad condition", {
   expect_error(
     hessian(function(v, w) sum(gamma(v)) + sum(w)),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 

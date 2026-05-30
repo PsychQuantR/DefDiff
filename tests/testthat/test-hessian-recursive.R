@@ -13,7 +13,7 @@ TOL_ND    <- 1e-5
 # ===== (1) Shape / grain classifier =====
 
 test_that(".hess_shape classifies scalar / vector_grain / vector_dense", {
-  shp <- function(e) dat:::.hess_shape(e, "v")
+  shp <- function(e) DefDiff:::.hess_shape(e, "v")
   # scalars: reductions and length-1 literals
   expect_identical(shp(quote(sum(v^2))), "scalar")
   expect_identical(shp(quote(crossprod(v, v))), "scalar")
@@ -32,7 +32,7 @@ test_that(".hess_shape classifies scalar / vector_grain / vector_dense", {
 })
 
 test_that(".hess_shape classifies scalar-denominator quotients, flags vector denominators", {
-  shp <- function(e) dat:::.hess_shape(e, "v")
+  shp <- function(e) DefDiff:::.hess_shape(e, "v")
   # A var-dependent scalar denominator makes the Jacobian dense (closed by
   # add-hessian-quotient-walker); previously this was "unknown".
   expect_identical(shp(quote((2 * v) / sum(exp(v)))), "vector_dense")
@@ -44,8 +44,8 @@ test_that(".hess_shape classifies scalar-denominator quotients, flags vector den
 
 # Build a Hessian function directly from the recursive walker (pre-wiring).
 build_hess <- function(f, var = "v") {
-  body_e <- dat:::.strip_paren(body(f))
-  H <- dat:::.hessian_recursive(body_e, var)
+  body_e <- DefDiff:::.strip_paren(body(f))
+  H <- DefDiff:::.hessian_recursive(body_e, var)
   hf <- function() NULL
   formals(hf) <- formals(f)
   body(hf) <- H
@@ -95,8 +95,8 @@ test_that("recursive Hessians cross-check against numDeriv::hessian", {
 test_that("unsupported generator propagates the grad engine condition", {
   # gamma is outside the differentiation catalog: grad raises, hessian inherits.
   expect_error(
-    dat:::.hessian_recursive(quote(sum(gamma(v))), "v"),
-    class = "dat_not_definable"
+    DefDiff:::.hessian_recursive(quote(sum(gamma(v))), "v"),
+    class = "DefDiff_not_definable"
   )
 })
 
@@ -111,7 +111,7 @@ test_that("scalar-denominator quotient gradient is constructed (was a boundary)"
 test_that("vector-denominator quotient gradient raises hessian_not_supported", {
   # vector / vector remains the out-of-scope quotient shape.
   expect_error(
-    dat:::.jacobian_inner(quote(v / sin(v)), "v", "v"),
+    DefDiff:::.jacobian_inner(quote(v / sin(v)), "v", "v"),
     class = "hessian_not_supported"
   )
 })

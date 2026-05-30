@@ -36,7 +36,7 @@ test_that("constant-denominator quotient Hessian reduces to a scaled Hessian", {
 # vector-valued is outside the scalar-output contract.
 test_that("vector-denominator quotient still raises hessian_not_supported", {
   expect_error(
-    dat:::.jacobian_inner(quote(v / sin(v)), "v", "v"),
+    DefDiff:::.jacobian_inner(quote(v / sin(v)), "v", "v"),
     class = "hessian_not_supported"
   )
 })
@@ -63,11 +63,11 @@ test_that("multi-variable quotient Hessian blocks match numDeriv and are symmetr
 
 # ===== Task 4.2 — failure modes =====================================
 # A quotient whose numerator gradient is uncomputable propagates the grad
-# engine's condition (dat_not_definable), NOT hessian_not_supported.
+# engine's condition (DefDiff_not_definable), NOT hessian_not_supported.
 test_that("quotient with an uncomputable numerator propagates the grad condition", {
   expect_error(
     hessian(function(v) sum(gamma(v)) / sum(exp(v))),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 
@@ -76,8 +76,8 @@ test_that("quotient with an uncomputable numerator propagates the grad condition
 # fast-dispatched gradient AST and preserve its value, so the walker downstream
 # sees a uniform canonical surface.
 test_that(".normalize_fast_kernels strips fast kernels and preserves value", {
-  g <- dat:::.grad_expr(quote(sum(v * exp(v)) / sum(exp(v))), "v")
-  n <- dat:::.normalize_fast_kernels(g)
+  g <- DefDiff:::.grad_expr(quote(sum(v * exp(v)) / sum(exp(v))), "v")
+  n <- DefDiff:::.normalize_fast_kernels(g)
   expect_false(grepl("fast_", paste(deparse(n), collapse = "")))
   v <- c(0.5, 1.0, 1.5)
   # eval() runs the grad engine's OWN generated AST (n and g), not external

@@ -165,7 +165,7 @@ test_that("jacobian: vector-of-reductions Jacobian matches numDeriv", {
   v <- c(0.5, 1.2, -0.3)
   F <- function(v) c(sum(v^2), sum(sin(v)), sum(exp(v)))
   J  <- jacobian(F)(v)
-  # numDeriv::jacobian is an S3 generic; dat::jacobian.function shadows
+  # numDeriv::jacobian is an S3 generic; DefDiff::jacobian.function shadows
   # numDeriv's jacobian.function via the global S3 table when dat is loaded.
   # Call numDeriv's method explicitly (mirrors the hessian.default idiom).
   nd <- getFromNamespace("jacobian.default", "numDeriv")(F, v)

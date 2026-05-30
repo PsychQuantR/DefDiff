@@ -1,6 +1,6 @@
 ## zzz.R
 ## Namespace directives for compiled code registration.
 
-#' @useDynLib dat, .registration = TRUE
+#' @useDynLib DefDiff, .registration = TRUE
 #' @importFrom Rcpp evalCpp
 NULL

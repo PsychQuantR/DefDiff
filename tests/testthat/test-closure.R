@@ -81,23 +81,23 @@ test_that("Closure: explicit product sum(v * v * v)", {
 test_that(".grad_inner edge: constant — pullback emits zero vector", {
   # Phase 6: walker returns list(value, pullback). For a constant leaf,
   # the pullback is the zero-pullback: pullback(g) = rep(0, length(v)).
-  shim <- dat:::.grad_inner(quote(5), "v")
+  shim <- DefDiff:::.grad_inner(quote(5), "v")
   expect_equal(shim$value, 5)
   expect_identical(shim$pullback(quote(g)), bquote(rep(0, length(v))))
-  shim2 <- dat:::.grad_inner(quote(3.14), "v")
+  shim2 <- DefDiff:::.grad_inner(quote(3.14), "v")
   expect_equal(shim2$value, 3.14)
   expect_identical(shim2$pullback(quote(g)), bquote(rep(0, length(v))))
 })
 
 test_that(".grad_inner edge: bare variable — pullback is identity", {
   # For the bare variable, pullback(g) = g (upstream gradient passes through).
-  shim <- dat:::.grad_inner(quote(v), "v")
+  shim <- DefDiff:::.grad_inner(quote(v), "v")
   expect_identical(shim$value, quote(v))
   expect_identical(shim$pullback(quote(g)), quote(g))
 })
 
 test_that(".grad_inner edge: different symbol — pullback emits zero vector", {
-  shim <- dat:::.grad_inner(quote(w), "v")
+  shim <- DefDiff:::.grad_inner(quote(w), "v")
   expect_identical(shim$value, quote(w))
   expect_identical(shim$pullback(quote(g)), bquote(rep(0, length(v))))
 })
@@ -118,7 +118,7 @@ test_that(".grad_inner edge: zero gradient when var not present", {
 
   # Walker invoked directly: pullback applied to any upstream collapses to
   # rep(0, length(v)) (no var-dependence anywhere in the sub-expression).
-  shim <- dat:::.grad_inner(quote(sin(w) + cos(w)), "v")
+  shim <- DefDiff:::.grad_inner(quote(sin(w) + cos(w)), "v")
   expect_true(!is.null(shim$pullback))
   env <- new.env(parent = baseenv())
   env$v <- c(1.1, 2.2, 3.3)

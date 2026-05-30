@@ -39,12 +39,12 @@ test_that("L_1 catalog entries are NOT consulted by walker fallback", {
   on.exit({ .dat_env$catalog$L_1[["mysum"]] <- NULL }, add = TRUE)
 
   # Use mysum inside sum — walker encounters mysum, should NOT fall through
-  # to L_1; should raise dat_unknown_generator instead
-  # Walker raises dat_unknown_generator; .sum_rule wraps into dat_not_definable
+  # to L_1; should raise DefDiff_unknown_generator instead
+  # Walker raises DefDiff_unknown_generator; .sum_rule wraps into DefDiff_not_definable
   # (post-Tier-3 wrapping). Match on the wrapped class + message regex.
   expect_error(
     grad(function(v) sum(mysum(v) * v)),
-    class = "dat_not_definable",
+    class = "DefDiff_not_definable",
     regexp = "mysum"
   )
 })
@@ -64,11 +64,11 @@ test_that("Walker's local switch takes precedence over L_0 fallback for known op
 
 # ---- 5. Unknown generator still raises after both lookups miss ----
 
-test_that("Unknown generator raises (wrapped as dat_not_definable by .sum_rule) naming the missing function", {
-  # Walker raises dat_unknown_generator; .sum_rule wraps it as dat_not_definable.
+test_that("Unknown generator raises (wrapped as DefDiff_not_definable by .sum_rule) naming the missing function", {
+  # Walker raises DefDiff_unknown_generator; .sum_rule wraps it as DefDiff_not_definable.
   expect_error(
     grad(function(v) sum(gamma(v))),
-    class = "dat_not_definable",
+    class = "DefDiff_not_definable",
     regexp = "gamma"
   )
 })
@@ -81,7 +81,7 @@ test_that("L_2 catalog entries are NOT consulted by walker fallback", {
 
   expect_error(
     grad(function(v) sum(mygen(v) * v)),
-    class = "dat_not_definable",
+    class = "DefDiff_not_definable",
     regexp = "mygen"
   )
 })
@@ -97,7 +97,7 @@ test_that("L_3 catalog entries are NOT reached via fallback (only via switch)", 
 
   expect_error(
     grad(function(v) sum(mygen3(v) * v)),
-    class = "dat_not_definable",
+    class = "DefDiff_not_definable",
     regexp = "mygen3"
   )
 })

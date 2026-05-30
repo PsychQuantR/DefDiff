@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // fast_scalar_mul
 Rcpp::NumericVector fast_scalar_mul(double s, Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_scalar_mul(SEXP sSEXP, SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_scalar_mul(SEXP sSEXP, SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -24,7 +24,7 @@ END_RCPP
 }
 // fast_sum_sq
 double fast_sum_sq(Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_sum_sq(SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_sum_sq(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -35,7 +35,7 @@ END_RCPP
 }
 // fast_sum_pow
 double fast_sum_pow(Rcpp::NumericVector v, int k);
-RcppExport SEXP _dat_fast_sum_pow(SEXP vSEXP, SEXP kSEXP) {
+RcppExport SEXP _DefDiff_fast_sum_pow(SEXP vSEXP, SEXP kSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -47,7 +47,7 @@ END_RCPP
 }
 // fast_vv_cos
 Rcpp::NumericVector fast_vv_cos(Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_vv_cos(SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_vv_cos(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -58,7 +58,7 @@ END_RCPP
 }
 // fast_vv_sin
 Rcpp::NumericVector fast_vv_sin(Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_vv_sin(SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_vv_sin(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -69,7 +69,7 @@ END_RCPP
 }
 // fast_vv_exp
 Rcpp::NumericVector fast_vv_exp(Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_vv_exp(SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_vv_exp(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -80,7 +80,7 @@ END_RCPP
 }
 // fast_vv_log
 Rcpp::NumericVector fast_vv_log(Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_vv_log(SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_vv_log(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -91,7 +91,7 @@ END_RCPP
 }
 // fast_vv_tanh
 Rcpp::NumericVector fast_vv_tanh(Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_vv_tanh(SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_vv_tanh(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -102,7 +102,7 @@ END_RCPP
 }
 // fast_vv_sqrt
 Rcpp::NumericVector fast_vv_sqrt(Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_vv_sqrt(SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_vv_sqrt(SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -113,7 +113,7 @@ END_RCPP
 }
 // fast_vec_add
 Rcpp::NumericVector fast_vec_add(Rcpp::NumericVector v, Rcpp::NumericVector w);
-RcppExport SEXP _dat_fast_vec_add(SEXP vSEXP, SEXP wSEXP) {
+RcppExport SEXP _DefDiff_fast_vec_add(SEXP vSEXP, SEXP wSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -125,7 +125,7 @@ END_RCPP
 }
 // fast_vec_sub
 Rcpp::NumericVector fast_vec_sub(Rcpp::NumericVector v, Rcpp::NumericVector w);
-RcppExport SEXP _dat_fast_vec_sub(SEXP vSEXP, SEXP wSEXP) {
+RcppExport SEXP _DefDiff_fast_vec_sub(SEXP vSEXP, SEXP wSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -137,7 +137,7 @@ END_RCPP
 }
 // fast_vec_smadd
 Rcpp::NumericVector fast_vec_smadd(double s, Rcpp::NumericVector v, Rcpp::NumericVector w);
-RcppExport SEXP _dat_fast_vec_smadd(SEXP sSEXP, SEXP vSEXP, SEXP wSEXP) {
+RcppExport SEXP _DefDiff_fast_vec_smadd(SEXP sSEXP, SEXP vSEXP, SEXP wSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -150,7 +150,7 @@ END_RCPP
 }
 // fast_scalar_div
 Rcpp::NumericVector fast_scalar_div(double s, Rcpp::NumericVector v);
-RcppExport SEXP _dat_fast_scalar_div(SEXP sSEXP, SEXP vSEXP) {
+RcppExport SEXP _DefDiff_fast_scalar_div(SEXP sSEXP, SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -162,7 +162,7 @@ END_RCPP
 }
 // fast_vec_mul
 Rcpp::NumericVector fast_vec_mul(Rcpp::NumericVector v, Rcpp::NumericVector w);
-RcppExport SEXP _dat_fast_vec_mul(SEXP vSEXP, SEXP wSEXP) {
+RcppExport SEXP _DefDiff_fast_vec_mul(SEXP vSEXP, SEXP wSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -174,7 +174,7 @@ END_RCPP
 }
 // fast_vec_div
 Rcpp::NumericVector fast_vec_div(Rcpp::NumericVector numerator, Rcpp::NumericVector denominator);
-RcppExport SEXP _dat_fast_vec_div(SEXP numeratorSEXP, SEXP denominatorSEXP) {
+RcppExport SEXP _DefDiff_fast_vec_div(SEXP numeratorSEXP, SEXP denominatorSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -186,7 +186,7 @@ END_RCPP
 }
 // metal_scalar_mul_init
 bool metal_scalar_mul_init(std::string metallib_path);
-RcppExport SEXP _dat_metal_scalar_mul_init(SEXP metallib_pathSEXP) {
+RcppExport SEXP _DefDiff_metal_scalar_mul_init(SEXP metallib_pathSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -197,7 +197,7 @@ END_RCPP
 }
 // metal_scalar_mul
 Rcpp::NumericVector metal_scalar_mul(double s, Rcpp::NumericVector v);
-RcppExport SEXP _dat_metal_scalar_mul(SEXP sSEXP, SEXP vSEXP) {
+RcppExport SEXP _DefDiff_metal_scalar_mul(SEXP sSEXP, SEXP vSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -209,27 +209,27 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dat_fast_scalar_mul", (DL_FUNC) &_dat_fast_scalar_mul, 2},
-    {"_dat_fast_sum_sq", (DL_FUNC) &_dat_fast_sum_sq, 1},
-    {"_dat_fast_sum_pow", (DL_FUNC) &_dat_fast_sum_pow, 2},
-    {"_dat_fast_vv_cos", (DL_FUNC) &_dat_fast_vv_cos, 1},
-    {"_dat_fast_vv_sin", (DL_FUNC) &_dat_fast_vv_sin, 1},
-    {"_dat_fast_vv_exp", (DL_FUNC) &_dat_fast_vv_exp, 1},
-    {"_dat_fast_vv_log", (DL_FUNC) &_dat_fast_vv_log, 1},
-    {"_dat_fast_vv_tanh", (DL_FUNC) &_dat_fast_vv_tanh, 1},
-    {"_dat_fast_vv_sqrt", (DL_FUNC) &_dat_fast_vv_sqrt, 1},
-    {"_dat_fast_vec_add", (DL_FUNC) &_dat_fast_vec_add, 2},
-    {"_dat_fast_vec_sub", (DL_FUNC) &_dat_fast_vec_sub, 2},
-    {"_dat_fast_vec_smadd", (DL_FUNC) &_dat_fast_vec_smadd, 3},
-    {"_dat_fast_scalar_div", (DL_FUNC) &_dat_fast_scalar_div, 2},
-    {"_dat_fast_vec_mul", (DL_FUNC) &_dat_fast_vec_mul, 2},
-    {"_dat_fast_vec_div", (DL_FUNC) &_dat_fast_vec_div, 2},
-    {"_dat_metal_scalar_mul_init", (DL_FUNC) &_dat_metal_scalar_mul_init, 1},
-    {"_dat_metal_scalar_mul", (DL_FUNC) &_dat_metal_scalar_mul, 2},
+    {"_DefDiff_fast_scalar_mul", (DL_FUNC) &_DefDiff_fast_scalar_mul, 2},
+    {"_DefDiff_fast_sum_sq", (DL_FUNC) &_DefDiff_fast_sum_sq, 1},
+    {"_DefDiff_fast_sum_pow", (DL_FUNC) &_DefDiff_fast_sum_pow, 2},
+    {"_DefDiff_fast_vv_cos", (DL_FUNC) &_DefDiff_fast_vv_cos, 1},
+    {"_DefDiff_fast_vv_sin", (DL_FUNC) &_DefDiff_fast_vv_sin, 1},
+    {"_DefDiff_fast_vv_exp", (DL_FUNC) &_DefDiff_fast_vv_exp, 1},
+    {"_DefDiff_fast_vv_log", (DL_FUNC) &_DefDiff_fast_vv_log, 1},
+    {"_DefDiff_fast_vv_tanh", (DL_FUNC) &_DefDiff_fast_vv_tanh, 1},
+    {"_DefDiff_fast_vv_sqrt", (DL_FUNC) &_DefDiff_fast_vv_sqrt, 1},
+    {"_DefDiff_fast_vec_add", (DL_FUNC) &_DefDiff_fast_vec_add, 2},
+    {"_DefDiff_fast_vec_sub", (DL_FUNC) &_DefDiff_fast_vec_sub, 2},
+    {"_DefDiff_fast_vec_smadd", (DL_FUNC) &_DefDiff_fast_vec_smadd, 3},
+    {"_DefDiff_fast_scalar_div", (DL_FUNC) &_DefDiff_fast_scalar_div, 2},
+    {"_DefDiff_fast_vec_mul", (DL_FUNC) &_DefDiff_fast_vec_mul, 2},
+    {"_DefDiff_fast_vec_div", (DL_FUNC) &_DefDiff_fast_vec_div, 2},
+    {"_DefDiff_metal_scalar_mul_init", (DL_FUNC) &_DefDiff_metal_scalar_mul_init, 1},
+    {"_DefDiff_metal_scalar_mul", (DL_FUNC) &_DefDiff_metal_scalar_mul, 2},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_dat(DllInfo *dll) {
+RcppExport void R_init_DefDiff(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

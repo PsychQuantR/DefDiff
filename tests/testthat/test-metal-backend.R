@@ -18,7 +18,7 @@ test_that(".metal_path_available() returns a logical and never errors", {
 # result. Runs everywhere (no Metal needed; the else branch is taken).
 test_that("default threshold keeps a small vector on the vDSP path", {
   skip_on_os(c("windows", "linux", "solaris"))
-  old <- options(dat.metal_threshold = 1e9L); on.exit(options(old), add = TRUE)
+  old <- options(DefDiff.metal_threshold = 1e9L); on.exit(options(old), add = TRUE)
   gf <- grad(function(v) sum(v^2))
   expect_equal(gf(c(1, 2, 3)), c(2, 4, 6), tolerance = 4 * .Machine$double.eps)
 })
@@ -28,11 +28,11 @@ test_that("default threshold keeps a small vector on the vDSP path", {
 test_that("lowered threshold routes the canonical gradient to Metal, matching vDSP", {
   skip_on_os(c("windows", "linux", "solaris"))
   skip_if(!.metal_path_available(), "Metal backend not available")
-  old <- options(dat.metal_threshold = 1L); on.exit(options(old), add = TRUE)
+  old <- options(DefDiff.metal_threshold = 1L); on.exit(options(old), add = TRUE)
   v <- c(1.5, -2.0, 3.25, 0.0, 7.5)
   gf <- grad(function(v) sum(v^2))
   metal_result <- gf(v)
-  expect_equal(metal_result, dat:::fast_scalar_mul(2, v), tolerance = TOL_METAL)
+  expect_equal(metal_result, DefDiff:::fast_scalar_mul(2, v), tolerance = TOL_METAL)
   expect_equal(metal_result, 2 * v, tolerance = TOL_METAL)
 })
 
@@ -42,7 +42,7 @@ test_that("metal_scalar_mul matches the double product within 1e-6", {
   skip_if(!.metal_path_available(), "Metal backend not available")
   set.seed(7)
   v <- runif(1000, -10, 10)
-  expect_equal(dat:::metal_scalar_mul(2.5, v), 2.5 * v, tolerance = TOL_METAL)
+  expect_equal(DefDiff:::metal_scalar_mul(2.5, v), 2.5 * v, tolerance = TOL_METAL)
 })
 
 # Fallback symmetry: below-threshold result equals the lowered-threshold result
@@ -53,7 +53,7 @@ test_that("Metal and vDSP paths agree within float32 tolerance", {
   skip_if(!.metal_path_available(), "Metal backend not available")
   v <- c(0.1, 0.2, 0.3, 0.4)
   gf <- grad(function(v) sum(v^2))
-  cpu <- local({ old <- options(dat.metal_threshold = 1e9L); on.exit(options(old)); gf(v) })
-  gpu <- local({ old <- options(dat.metal_threshold = 1L);  on.exit(options(old)); gf(v) })
+  cpu <- local({ old <- options(DefDiff.metal_threshold = 1e9L); on.exit(options(old)); gf(v) })
+  gpu <- local({ old <- options(DefDiff.metal_threshold = 1L);  on.exit(options(old)); gf(v) })
   expect_equal(cpu, gpu, tolerance = TOL_METAL)
 })

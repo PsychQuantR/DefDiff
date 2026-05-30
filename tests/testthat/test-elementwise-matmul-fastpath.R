@@ -143,6 +143,6 @@ test_that("Negative: sum(tanh(v %*% v)) (no constant W) falls through", {
   v_local <- c(1, 2, 3)  # avoid conflict
   expect_error(
     grad(function(v) sum(tanh(v %*% v))),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })

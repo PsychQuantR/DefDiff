@@ -1,6 +1,6 @@
-test_that("verify_grad returns dat_verify_result with three slots", {
+test_that("verify_grad returns DefDiff_verify_result with three slots", {
   result <- verify_grad(function(v) sum(v^2), function(v) 2 * v)
-  expect_s3_class(result, "dat_verify_result")
+  expect_s3_class(result, "DefDiff_verify_result")
   expect_named(result, c("syntactic", "numeric", "cross_strategy"))
 })
 
@@ -56,7 +56,7 @@ test_that("print method emits three-layer summary", {
 
 test_that("verify_grad rejects non-function inputs", {
   expect_error(verify_grad("not_a_function", function(v) v),
-               class = "dat_not_definable")
+               class = "DefDiff_not_definable")
   expect_error(verify_grad(function(v) v, 42),
-               class = "dat_not_definable")
+               class = "DefDiff_not_definable")
 })

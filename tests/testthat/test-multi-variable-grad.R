@@ -108,11 +108,11 @@ test_that("grad.function: absent variable yields a zero gradient", {
   expect_true(all(r$w == 0))                   # d/dw = 0 (absent → zero)
 })
 
-# ===== (j) control flow still raises dat_not_definable =====
+# ===== (j) control flow still raises DefDiff_not_definable =====
 
 test_that("grad.function: control flow in multi-var body still raises", {
   expect_error(
     grad(function(v, w) if (sum(v) > 0) sum(v * w) else 0, vars = c("v", "w")),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })

@@ -35,8 +35,8 @@
 ## Any vDSP/vForce/Metal fast-path-dependent test adds
 ##   skip_on_os(c("windows","linux","solaris"))   (off macOS the fast path
 ##   falls back to base-R, so there is no speedup to assert) plus, for the
-##   universal safety net, skip_if(!dat:::.fast_path_available()).
-## Metal tests additionally skip_if(!dat:::.metal_path_available()).
+##   universal safety net, skip_if(!DefDiff:::.fast_path_available()).
+## Metal tests additionally skip_if(!DefDiff:::.metal_path_available()).
 ##
 ## ---------------------------------------------------------------------------
 ## Methodology notes baked into the helpers (measured pitfalls on this machine)
@@ -229,7 +229,7 @@ test_that("Tier 1 vDSP gradient path is not a regression vs base-R 2*v (honest t
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vDSP fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vDSP fast path not available")
 
   gf <- grad(function(v) sum(v^2))   # -> fast_scalar_mul(2, v) via vDSP
   set.seed(1); v <- runif(1e6L)
@@ -246,7 +246,7 @@ test_that("fast_scalar_mul vDSP kernel is not a regression vs base-R * (honest t
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vDSP fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vDSP fast path not available")
 
   set.seed(1); v <- runif(1e6L)
 
@@ -275,7 +275,7 @@ test_that("DD grad operator (sin -> fast_vv_cos) beats numDeriv by a wide margin
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench"); skip_if_not_installed("numDeriv")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   f  <- function(v) sum(sin(v))
   gf <- grad(f)
@@ -294,7 +294,7 @@ test_that("fast_vv_sin kernel is faster than base-R sin at n=1e6", {
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   set.seed(7); v <- runif(1e6L, 0.1, 3)
   bm <- .bench2(quote(fast_vv_sin(v)), quote(sin(v)),
@@ -310,7 +310,7 @@ test_that("fast_vv_cos kernel is faster than base-R cos at n=1e6", {
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   set.seed(7); v <- runif(1e6L, 0.1, 3)
   bm <- .bench2(quote(fast_vv_cos(v)), quote(cos(v)),
@@ -326,7 +326,7 @@ test_that("fast_vv_sqrt kernel is faster than base-R sqrt at n=1e6", {
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   set.seed(7); v <- runif(1e6L, 0.1, 3)
   bm <- .bench2(quote(fast_vv_sqrt(v)), quote(sqrt(v)),
@@ -342,7 +342,7 @@ test_that("fast_vv_tanh kernel is faster than base-R tanh at n=1e6", {
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   set.seed(7); v <- runif(1e6L, 0.1, 3)
   bm <- .bench2(quote(fast_vv_tanh(v)), quote(tanh(v)),
@@ -358,7 +358,7 @@ test_that("fast_vv_log kernel is faster than base-R log at n=1e6", {
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   set.seed(7); v <- runif(1e6L, 0.1, 3)
   bm <- .bench2(quote(fast_vv_log(v)), quote(log(v)),
@@ -374,7 +374,7 @@ test_that("fast_vv_exp kernel is not slower than base-R exp at n=1e6 (non-regres
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   set.seed(7); v <- runif(1e6L, 0.1, 3)
   bm <- .bench2(quote(fast_vv_exp(v)), quote(exp(v)),
@@ -391,7 +391,7 @@ test_that("grad(sum(sin(v))) carries the vForce win end-to-end vs base-R cos(v)"
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   g_sin <- grad(function(v) sum(sin(v)))   # derivative routes to fast_vv_cos
   set.seed(7); v <- runif(1e6L, 0.1, 3)
@@ -419,7 +419,7 @@ test_that("fast_sum_sq is much faster than base-R sum(v^2) at large n", {
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vDSP fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vDSP fast path not available")
 
   set.seed(1); v <- runif(1e6L)
   bm <- .bench2(quote(fast_sum_sq(v)), quote(sum(v^2)),
@@ -435,7 +435,7 @@ test_that("fast_sum_pow(v,3) is not catastrophically slower than base-R sum(v^3)
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vDSP fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vDSP fast path not available")
 
   set.seed(1); v <- runif(1e6L)
   bm <- .bench2(quote(fast_sum_pow(v, 3)), quote(sum(v^3)),
@@ -452,7 +452,7 @@ test_that("fast_sum_pow(v,4) is not catastrophically slower than base-R sum(v^4)
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vDSP fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vDSP fast path not available")
 
   set.seed(1); v <- runif(1e6L)
   bm <- .bench2(quote(fast_sum_pow(v, 4)), quote(sum(v^4)),
@@ -481,7 +481,7 @@ test_that("Tier 2c grad(sum(exp(v))) scales sub-quadratically (decade ratio 1e6-
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vForce fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vForce fast path not available")
 
   gf <- grad(function(v) sum(exp(v)))
   set.seed(1); v6 <- runif(1e6L); set.seed(2); v7 <- runif(1e7L)
@@ -495,7 +495,7 @@ test_that("Tier 1 grad(sum(v^2)) scales sub-quadratically (decade ratio 1e6->1e7
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vDSP fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vDSP fast path not available")
 
   gf <- grad(function(v) sum(v^2))
   set.seed(1); v6 <- runif(1e6L); set.seed(2); v7 <- runif(1e7L)
@@ -509,7 +509,7 @@ test_that("Tier 3 grad(sum(v^3)) scales sub-quadratically (decade ratio 1e6->1e7
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vDSP fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vDSP fast path not available")
 
   gf <- grad(function(v) sum(v^3))
   set.seed(1); v6 <- runif(1e6L); set.seed(2); v7 <- runif(1e7L)
@@ -523,7 +523,7 @@ test_that("grad fast path has no catastrophic blowup across the full 1e4->1e7 sp
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.fast_path_available(), "vDSP fast path not available")
+  skip_if(!DefDiff:::.fast_path_available(), "vDSP fast path not available")
 
   gf <- grad(function(v) sum(v^2))
   set.seed(1); v4 <- runif(1e4L); set.seed(2); v7 <- runif(1e7L)
@@ -552,16 +552,16 @@ test_that("default-threshold canonical gradient adds negligible overhead vs the 
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.metal_path_available(), "Metal backend not available")
+  skip_if(!DefDiff:::.metal_path_available(), "Metal backend not available")
 
-  old <- options(dat.metal_threshold = 1e9L); on.exit(options(old), add = TRUE)
+  old <- options(DefDiff.metal_threshold = 1e9L); on.exit(options(old), add = TRUE)
   gf <- grad(function(v) sum(v^2))           # default threshold -> vDSP fall-through
   set.seed(1); v <- runif(1e6L)
 
-  bm <- .bench2(quote(gf(v)), quote(dat:::fast_scalar_mul(2, v)),
+  bm <- .bench2(quote(gf(v)), quote(DefDiff:::fast_scalar_mul(2, v)),
                 environment(), min_iterations = 30L)
   guarded <- .bm_median(bm, "gf(v)")
-  plain   <- .bm_median(bm, "dat:::fast_scalar_mul(2, v)")
+  plain   <- .bm_median(bm, "DefDiff:::fast_scalar_mul(2, v)")
 
   # Measured guarded/plain ~1.0x (tie: guard cost is negligible). Ceiling 1.5x.
   expect_lt(guarded, plain * 1.5)
@@ -571,9 +571,9 @@ test_that("default-threshold gradient is not slower than base-R 2*v on the vDSP 
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.metal_path_available(), "Metal backend not available")
+  skip_if(!DefDiff:::.metal_path_available(), "Metal backend not available")
 
-  old <- options(dat.metal_threshold = 1e9L); on.exit(options(old), add = TRUE)
+  old <- options(DefDiff.metal_threshold = 1e9L); on.exit(options(old), add = TRUE)
   gf <- grad(function(v) sum(v^2))
   set.seed(1); v <- runif(1e6L)
 
@@ -589,14 +589,14 @@ test_that("threshold guard is load-bearing: default vDSP path far faster than fo
   skip_on_cran(); skip_on_ci()
   skip_if_not_installed("bench")
   skip_on_os(c("windows", "linux", "solaris"))
-  skip_if(!dat:::.metal_path_available(), "Metal backend not available")
+  skip_if(!DefDiff:::.metal_path_available(), "Metal backend not available")
 
   gf <- grad(function(v) sum(v^2))
   set.seed(1); v <- runif(1e6L)
 
   # Default threshold (vDSP). Warm up + measure under a scoped option.
   default_med <- local({
-    old <- options(dat.metal_threshold = 1e9L); on.exit(options(old), add = TRUE)
+    old <- options(DefDiff.metal_threshold = 1e9L); on.exit(options(old), add = TRUE)
     invisible(gf(v))
     bm <- bench::mark(gf(v), check = FALSE, filter_gc = FALSE, min_iterations = 20L)
     .bm_median1(bm)
@@ -604,7 +604,7 @@ test_that("threshold guard is load-bearing: default vDSP path far faster than fo
 
   # Lowered threshold FORCES Metal at n=1e6. Also assert no error + length n.
   metal_med <- local({
-    old <- options(dat.metal_threshold = 1L); on.exit(options(old), add = TRUE)
+    old <- options(DefDiff.metal_threshold = 1L); on.exit(options(old), add = TRUE)
     metal_result <- expect_no_error(gf(v))
     expect_length(metal_result, length(v))
     invisible(gf(v))

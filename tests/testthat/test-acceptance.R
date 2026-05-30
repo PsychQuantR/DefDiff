@@ -15,7 +15,7 @@ test_that("acceptance 3: level(quote(sin(sum(v^2)))) returns 'L_3'", {
 })
 
 test_that("acceptance 4: extend_language registers erf and level recognises", {
-  dat:::register_default_catalog()
+  DefDiff:::register_default_catalog()
   extend_language(
     "L_3", "erf",
     function(x, dx) bquote(2 / sqrt(pi) * exp(-(.(x))^2) * .(dx))

@@ -46,7 +46,7 @@
 extend_language <- function(level, name, derivative) {
   if (!is.character(level) || length(level) != 1L || !(level %in% .dat_levels)) {
     .dat_stop(
-      "dat_invalid_extension",
+      "DefDiff_invalid_extension",
       paste0(
         "Invalid `level` argument: must be one of L_0, L_1, L_2, L_3; got ",
         deparse(level)
@@ -55,13 +55,13 @@ extend_language <- function(level, name, derivative) {
   }
   if (!is.character(name) || length(name) != 1L || nzchar(name) == FALSE) {
     .dat_stop(
-      "dat_invalid_extension",
+      "DefDiff_invalid_extension",
       paste0("Invalid `name` argument: must be a length-1 character; got ", deparse(name))
     )
   }
   if (!is.function(derivative)) {
     .dat_stop(
-      "dat_invalid_extension",
+      "DefDiff_invalid_extension",
       paste0("Invalid `derivative` argument: must be a function; got ", typeof(derivative))
     )
   }
@@ -85,7 +85,7 @@ language_catalog <- function(level = NULL) {
   } else {
     if (!(level %in% .dat_levels)) {
       .dat_stop(
-        "dat_invalid_extension",
+        "DefDiff_invalid_extension",
         paste0("Unknown level: ", deparse(level))
       )
     }

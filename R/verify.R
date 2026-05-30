@@ -16,7 +16,7 @@
 #' @param n_samples Integer. Number of random vectors to evaluate at.
 #' @param sample_dim Integer. Dimension of the sample vectors.
 #' @param tol Numeric. Tolerance for numeric agreement.
-#' @return An S3 object of class `dat_verify_result` with named slots
+#' @return An S3 object of class `DefDiff_verify_result` with named slots
 #'   `$syntactic`, `$numeric`, `$cross_strategy`.
 #' @export
 #' @examples
@@ -26,7 +26,7 @@
 #' print(result)
 verify_grad <- function(f, gf, n_samples = 100L, sample_dim = 3L, tol = 1e-6) {
   if (!is.function(f) || !is.function(gf)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "verify_grad() requires both `f` and `gf` to be functions.")
   }
   set.seed(1234L)
@@ -37,7 +37,7 @@ verify_grad <- function(f, gf, n_samples = 100L, sample_dim = 3L, tol = 1e-6) {
     numeric        = .verify_numeric(f, gf, samples, tol),
     cross_strategy = .verify_cross_strategy(f, gf, samples, tol)
   )
-  structure(result, class = "dat_verify_result")
+  structure(result, class = "DefDiff_verify_result")
 }
 
 # Layer 1: level(gf) is at most level(f).
@@ -106,13 +106,13 @@ verify_grad <- function(f, gf, n_samples = 100L, sample_dim = 3L, tol = 1e-6) {
   list(pass = max_err < tol, oracle = "Deriv", max_abs_error = max_err)
 }
 
-#' Print method for `dat_verify_result`
+#' Print method for `DefDiff_verify_result`
 #'
-#' @param x A `dat_verify_result` object returned by `verify_grad()`.
+#' @param x A `DefDiff_verify_result` object returned by `verify_grad()`.
 #' @param ... Ignored.
 #' @return Invisibly returns `x`.
 #' @export
-print.dat_verify_result <- function(x, ...) {
+print.DefDiff_verify_result <- function(x, ...) {
   cat("DAT gradient verification result\n")
   cat("================================\n")
   s <- x$syntactic

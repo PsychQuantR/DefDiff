@@ -2,7 +2,7 @@
 ## Coverage:
 ##   - Recognized patterns (elementwise sum(v^k), sum(<atom>(v)), quadratic form)
 ##   - hessian_not_supported condition for unrecognized inputs
-##   - dat_not_definable for multi-variable inputs
+##   - DefDiff_not_definable for multi-variable inputs
 ##   - Numeric equivalence vs numDeriv::hessian (skipped if absent)
 
 TOL_HESS <- 1e-8
@@ -103,13 +103,13 @@ test_that("hessian constructs scalar-denominator quotients via the recursive wal
 test_that("hessian still raises hessian_not_supported for a vector-denominator quotient", {
   # The remaining quotient boundary: a vector-valued denominator is outside the rules.
   expect_error(
-    dat:::.jacobian_inner(quote(v / sin(v)), "v", "v"),
+    DefDiff:::.jacobian_inner(quote(v / sin(v)), "v", "v"),
     class = "hessian_not_supported"
   )
 })
 
 test_that("hessian on multi-variable input returns a named list of blocks", {
-  # Previously raised dat_not_definable; closed by add-multi-variable-hessian.
+  # Previously raised DefDiff_not_definable; closed by add-multi-variable-hessian.
   H <- do.call(hessian(function(v, w) sum(v^2) + sum(w^2)),
                list(v = c(1, 2, 3), w = c(4, 5)))
   expect_type(H, "list")
@@ -129,7 +129,7 @@ test_that("hessian numeric output equals numDeriv::hessian within tolerance", {
     function(v) sum(exp(v))
   )
   v <- c(0.5, 1.0, 1.5)
-  # numDeriv::hessian is a UseMethod generic; dat::hessian.function shadows
+  # numDeriv::hessian is a UseMethod generic; DefDiff::hessian.function shadows
   # numDeriv::hessian.function via search path. Call numDeriv's method
   # explicitly via getFromNamespace.
   nd_hessian_function <- getFromNamespace("hessian.default", "numDeriv")

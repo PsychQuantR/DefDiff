@@ -130,7 +130,7 @@ test_that("nn_forward (Phase 4 pattern) matches analytic backprop", {
   # Locate the shipped benchmark helper via system.file (works under both
   # devtools::load_all and the installed package); the "../../inst" relative
   # path breaks under R CMD check, which runs tests from a temp dir.
-  src <- system.file("benchmarks", "real_world_patterns.R", package = "dat")
+  src <- system.file("benchmarks", "real_world_patterns.R", package = "DefDiff")
   skip_if(!nzchar(src) || !file.exists(src), "real_world_patterns.R not available")
   source(src)
   f_nn <- real_world_patterns$nn_forward$f_inline_builder(5L)

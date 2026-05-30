@@ -1,7 +1,7 @@
 # dat 0.1.0
 
 First tagged minor release. The package is a complete, installable R package
-(`R CMD build` + `R CMD INSTALL` succeed; `library(dat)` works) implementing
+(`R CMD build` + `R CMD INSTALL` succeed; `library(DefDiff)` works) implementing
 Definable Differentiation (DD): closed-form symbolic differentiation that stays
 within a declared generator catalog (the closure thesis), with macOS Accelerate
 (vDSP/vForce) and Metal fast paths.

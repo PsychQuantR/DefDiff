@@ -5,20 +5,20 @@
 ## with a rep(1, n) upstream.
 ##
 ## NOTE on eval(): we numerically verify pullback ASTs by evaluating them
-## with bound `v`. The ASTs come from trusted code (dat:::.grad_inner +
-## dat:::.make_pullback_* helpers). No external input passes through eval —
+## with bound `v`. The ASTs come from trusted code (DefDiff:::.grad_inner +
+## DefDiff:::.make_pullback_* helpers). No external input passes through eval —
 ## symbolic-AST verification, not arbitrary code execution.
 
 # Helper: dispatch to .grad_inner, then apply pullback with rep(1, length(v))
 # upstream, evaluating the resulting AST in an env where v is bound.
 #
 # SAFETY: eval() is intentional here — `grad_ast` is built by trusted internal
-# code (dat:::.grad_inner + dat:::.make_pullback_*). No external/user input
+# code (DefDiff:::.grad_inner + DefDiff:::.make_pullback_*). No external/user input
 # flows into the AST; this is symbolic-AST verification, not arbitrary code
 # execution. The env is restricted to baseenv() + the test's bound `v`.
 .eval_pullback <- function(expr_quoted, v_value) {
-  result <- dat:::.grad_inner(expr_quoted, "v")
-  pullback <- dat:::.pullback_of(result)
+  result <- DefDiff:::.grad_inner(expr_quoted, "v")
+  pullback <- DefDiff:::.pullback_of(result)
   if (is.null(pullback)) {
     stop("Pullback is NULL — sub-expression returned bare AST (pre-Phase-3)")
   }

@@ -37,7 +37,7 @@ test_that("components drawn from the chain catalog stack correctly", {
 # ===== Task 3.1 (RED) — boundary + failure modes =====================
 test_that("out-of-catalog component propagates the grad engine condition", {
   f <- function(v) c(sum(v), sum(gamma(v)))
-  expect_error(jacobian(f), class = "dat_not_definable")
+  expect_error(jacobian(f), class = "DefDiff_not_definable")
 })
 
 test_that("implicit (non-c(...)) vector body raises jacobian_not_supported", {
@@ -46,9 +46,9 @@ test_that("implicit (non-c(...)) vector body raises jacobian_not_supported", {
   expect_error(jacobian(f), class = "jacobian_not_supported")
 })
 
-test_that("control flow in the body raises dat_not_definable", {
+test_that("control flow in the body raises DefDiff_not_definable", {
   f <- function(v) if (v[1] > 0) c(sum(v), sum(v^2)) else c(0, 0)
-  expect_error(jacobian(f), class = "dat_not_definable")
+  expect_error(jacobian(f), class = "DefDiff_not_definable")
 })
 
 # ===== Task 4.1 (RED) — numDeriv equivalence =========================

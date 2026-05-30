@@ -79,7 +79,7 @@ test_that("Regression: sum(v^2) / 2 still uses constant-denominator fast path", 
 test_that("Catalog gap propagation: sum(v^2) / sum(gamma(v)) raises with gamma named", {
   skip_if_no_fast()
   # gamma is not in declared L_3 catalog. The .grad_expr sub-derivative call
-  # for sum(gamma(v)) propagates dat_unknown_generator through the L_0 `/`
+  # for sum(gamma(v)) propagates DefDiff_unknown_generator through the L_0 `/`
   # rule's tryCatch, re-raising with top-level-division context that names gamma.
   expect_error(
     grad(function(v) sum(v^2) / sum(gamma(v))),

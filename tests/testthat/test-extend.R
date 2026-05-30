@@ -1,13 +1,13 @@
 test_that(".dat_env$catalog structure matches spec", {
-  dat:::register_default_catalog()
-  cat <- dat:::.dat_env$catalog
+  DefDiff:::register_default_catalog()
+  cat <- DefDiff:::.dat_env$catalog
   expect_named(cat, c("L_0", "L_1", "L_2", "L_3"))
   expect_true(is.list(cat$L_0))
   expect_true(is.list(cat$L_3))
 })
 
 test_that("extend_language registers a new L_3 generator", {
-  dat:::register_default_catalog()
+  DefDiff:::register_default_catalog()
   expect_false("erf" %in% language_catalog("L_3"))
   extend_language(
     "L_3", "erf",
@@ -19,31 +19,31 @@ test_that("extend_language registers a new L_3 generator", {
 })
 
 test_that("extend_language rejects invalid arguments", {
-  dat:::register_default_catalog()
+  DefDiff:::register_default_catalog()
   expect_error(
     extend_language("L_5", "foo", function(x, dx) dx),
-    class = "dat_invalid_extension"
+    class = "DefDiff_invalid_extension"
   )
   expect_error(
     extend_language("L_3", c("a", "b"), function(x, dx) dx),
-    class = "dat_invalid_extension"
+    class = "DefDiff_invalid_extension"
   )
   expect_error(
     extend_language("L_3", "foo", "not_a_function"),
-    class = "dat_invalid_extension"
+    class = "DefDiff_invalid_extension"
   )
 })
 
 test_that("register_default_catalog resets user-added generators", {
-  dat:::register_default_catalog()
+  DefDiff:::register_default_catalog()
   extend_language("L_3", "my_custom", function(x, dx) dx)
   expect_true("my_custom" %in% language_catalog("L_3"))
-  dat:::register_default_catalog()
+  DefDiff:::register_default_catalog()
   expect_false("my_custom" %in% language_catalog("L_3"))
 })
 
 test_that("language_catalog returns full list or filtered vector", {
-  dat:::register_default_catalog()
+  DefDiff:::register_default_catalog()
   full <- language_catalog()
   expect_named(full, c("L_0", "L_1", "L_2", "L_3"))
 
@@ -55,5 +55,5 @@ test_that("language_catalog returns full list or filtered vector", {
 })
 
 test_that("language_catalog rejects unknown level", {
-  expect_error(language_catalog("L_99"), class = "dat_invalid_extension")
+  expect_error(language_catalog("L_99"), class = "DefDiff_invalid_extension")
 })

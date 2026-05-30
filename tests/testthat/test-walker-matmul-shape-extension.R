@@ -130,10 +130,10 @@ test_that("Phase 5 negative: matmul where W depends on var — sum(tanh(v %*% v)
   # `v %*% v` has v as the first matmul operand. Per design's single-variable
   # scope non-goal, matmul-w.r.t.-W is unsupported. Walker's matmul case
   # requires `!.contains_var(W_expr, var)` → falls through to L_0 fallback
-  # which has no %*% rule → dat_unknown_generator → wrapped to dat_not_definable.
+  # which has no %*% rule → DefDiff_unknown_generator → wrapped to DefDiff_not_definable.
   expect_error(
     grad(function(v) sum(tanh(v %*% v))),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 
@@ -144,7 +144,7 @@ test_that("Phase 5 negative: non-vForce f in chain — sum(gamma(W %*% v))", {
   W <- W1_test
   expect_error(
     grad(function(v) sum(gamma(W %*% v))),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 
@@ -155,18 +155,18 @@ test_that("Phase 5 negative: nested var-dep matmul — sum(tanh(W %*% (v %*% v))
   W <- W1_test
   expect_error(
     grad(function(v) sum(tanh(W %*% (v %*% v)))),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 
 test_that("Phase 5 negative: control flow in body — function with if/else", {
   # Walker has no `if` case; falls to L_0 fallback; no `if` rule there →
-  # dat_unknown_generator → wrapped to dat_not_definable. Control flow is
+  # DefDiff_unknown_generator → wrapped to DefDiff_not_definable. Control flow is
   # explicitly out of scope per design (only differentiable straight-line
   # programs are supported).
   W <- W1_test
   expect_error(
     grad(function(v) sum(if (sum(v) > 0) tanh(W %*% v) else W %*% v)),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })

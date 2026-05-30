@@ -18,7 +18,7 @@ verify_grad(f, gf, n_samples = 100L, sample_dim = 3L, tol = 1e-06)
 \item{tol}{Numeric. Tolerance for numeric agreement.}
 }
 \value{
-An S3 object of class `dat_verify_result` with named slots
+An S3 object of class `DefDiff_verify_result` with named slots
   `$syntactic`, `$numeric`, `$cross_strategy`.
 }
 \description{

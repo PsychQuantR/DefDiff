@@ -15,7 +15,7 @@
 #'   to `s * v[i]` within `4 * .Machine$double.eps` of the R-native product.
 #' @export
 fast_scalar_mul <- function(s, v) {
-    .Call(`_dat_fast_scalar_mul`, s, v)
+    .Call(`_DefDiff_fast_scalar_mul`, s, v)
 }
 
 #' Fast sum-of-squares via Apple Accelerate vDSP
@@ -28,7 +28,7 @@ fast_scalar_mul <- function(s, v) {
 #' @return Scalar double equal to sum(v^2).
 #' @export
 fast_sum_sq <- function(v) {
-    .Call(`_dat_fast_sum_sq`, v)
+    .Call(`_DefDiff_fast_sum_sq`, v)
 }
 
 #' Fast sum-of-powers via Apple Accelerate vForce + vDSP
@@ -46,7 +46,7 @@ fast_sum_sq <- function(v) {
 #' @return Scalar double equal to sum(v^k).
 #' @export
 fast_sum_pow <- function(v, k) {
-    .Call(`_dat_fast_sum_pow`, v, k)
+    .Call(`_DefDiff_fast_sum_pow`, v, k)
 }
 
 #' vForce cosine (Tier 2c)
@@ -54,7 +54,7 @@ fast_sum_pow <- function(v, k) {
 #' @return Numeric vector with cos(v) elementwise via Apple Accelerate vvcos
 #' @export
 fast_vv_cos <- function(v) {
-    .Call(`_dat_fast_vv_cos`, v)
+    .Call(`_DefDiff_fast_vv_cos`, v)
 }
 
 #' vForce sine (Tier 2c)
@@ -62,7 +62,7 @@ fast_vv_cos <- function(v) {
 #' @return Numeric vector with sin(v) elementwise via Apple Accelerate vvsin
 #' @export
 fast_vv_sin <- function(v) {
-    .Call(`_dat_fast_vv_sin`, v)
+    .Call(`_DefDiff_fast_vv_sin`, v)
 }
 
 #' vForce exponential (Tier 2c)
@@ -70,7 +70,7 @@ fast_vv_sin <- function(v) {
 #' @return Numeric vector with exp(v) elementwise via Apple Accelerate vvexp
 #' @export
 fast_vv_exp <- function(v) {
-    .Call(`_dat_fast_vv_exp`, v)
+    .Call(`_DefDiff_fast_vv_exp`, v)
 }
 
 #' vForce logarithm (Tier 2c)
@@ -78,7 +78,7 @@ fast_vv_exp <- function(v) {
 #' @return Numeric vector with log(v) elementwise via Apple Accelerate vvlog
 #' @export
 fast_vv_log <- function(v) {
-    .Call(`_dat_fast_vv_log`, v)
+    .Call(`_DefDiff_fast_vv_log`, v)
 }
 
 #' vForce hyperbolic tangent (Tier 2c)
@@ -86,7 +86,7 @@ fast_vv_log <- function(v) {
 #' @return Numeric vector with tanh(v) elementwise via Apple Accelerate vvtanh
 #' @export
 fast_vv_tanh <- function(v) {
-    .Call(`_dat_fast_vv_tanh`, v)
+    .Call(`_DefDiff_fast_vv_tanh`, v)
 }
 
 #' vForce square root (Tier 2c)
@@ -94,7 +94,7 @@ fast_vv_tanh <- function(v) {
 #' @return Numeric vector with sqrt(v) elementwise via Apple Accelerate vvsqrt
 #' @export
 fast_vv_sqrt <- function(v) {
-    .Call(`_dat_fast_vv_sqrt`, v)
+    .Call(`_DefDiff_fast_vv_sqrt`, v)
 }
 
 #' Fast vector-vector add via Apple Accelerate vDSP (Tier 2b)
@@ -103,7 +103,7 @@ fast_vv_sqrt <- function(v) {
 #' @return Numeric vector v + w (elementwise)
 #' @export
 fast_vec_add <- function(v, w) {
-    .Call(`_dat_fast_vec_add`, v, w)
+    .Call(`_DefDiff_fast_vec_add`, v, w)
 }
 
 #' Fast vector-vector subtract via Apple Accelerate vDSP (Tier 2b)
@@ -112,7 +112,7 @@ fast_vec_add <- function(v, w) {
 #' @return Numeric vector v - w (elementwise)
 #' @export
 fast_vec_sub <- function(v, w) {
-    .Call(`_dat_fast_vec_sub`, v, w)
+    .Call(`_DefDiff_fast_vec_sub`, v, w)
 }
 
 #' Fast scalar-multiply-add via Apple Accelerate vDSP (Tier 2b)
@@ -122,7 +122,7 @@ fast_vec_sub <- function(v, w) {
 #' @return Numeric vector s * v + w (elementwise, fused single-pass via vDSP_vsmaD)
 #' @export
 fast_vec_smadd <- function(s, v, w) {
-    .Call(`_dat_fast_vec_smadd`, s, v, w)
+    .Call(`_DefDiff_fast_vec_smadd`, s, v, w)
 }
 
 #' Fast scalar-divide-vector via Apple Accelerate vDSP (Tier 2e)
@@ -131,7 +131,7 @@ fast_vec_smadd <- function(s, v, w) {
 #' @return Numeric vector where result[i] = s / v[i]
 #' @export
 fast_scalar_div <- function(s, v) {
-    .Call(`_dat_fast_scalar_div`, s, v)
+    .Call(`_DefDiff_fast_scalar_div`, s, v)
 }
 
 #' Fast vector-vector elementwise multiply via Apple Accelerate vDSP (Tier 3)
@@ -140,7 +140,7 @@ fast_scalar_div <- function(s, v) {
 #' @return Numeric vector with v[i] * w[i] elementwise
 #' @export
 fast_vec_mul <- function(v, w) {
-    .Call(`_dat_fast_vec_mul`, v, w)
+    .Call(`_DefDiff_fast_vec_mul`, v, w)
 }
 
 #' Fast vector-vector elementwise divide via Apple Accelerate vDSP (Tier 4 family-2)
@@ -160,7 +160,7 @@ fast_vec_mul <- function(v, w) {
 #' @return Numeric vector with `numerator[i] / denominator[i]` elementwise
 #' @export
 fast_vec_div <- function(numerator, denominator) {
-    .Call(`_dat_fast_vec_div`, numerator, denominator)
+    .Call(`_DefDiff_fast_vec_div`, numerator, denominator)
 }
 
 #' Initialize the Metal scalar-multiply pipeline (internal)
@@ -174,7 +174,7 @@ fast_vec_div <- function(numerator, denominator) {
 #' @return TRUE if the pipeline is ready, FALSE otherwise.
 #' @export
 metal_scalar_mul_init <- function(metallib_path) {
-    .Call(`_dat_metal_scalar_mul_init`, metallib_path)
+    .Call(`_DefDiff_metal_scalar_mul_init`, metallib_path)
 }
 
 #' Scalar-vector multiply on the Metal GPU (internal)
@@ -189,6 +189,6 @@ metal_scalar_mul_init <- function(metallib_path) {
 #' @return Numeric vector equal to s * v (float32 precision).
 #' @export
 metal_scalar_mul <- function(s, v) {
-    .Call(`_dat_metal_scalar_mul`, s, v)
+    .Call(`_DefDiff_metal_scalar_mul`, s, v)
 }
 

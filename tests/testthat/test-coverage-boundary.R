@@ -8,7 +8,7 @@
 # ---- Multi-variable input ----
 
 test_that("grad supports multi-variable input (add-multi-variable-gradient)", {
-  # Previously a boundary (raised dat_not_definable). add-multi-variable-gradient
+  # Previously a boundary (raised DefDiff_not_definable). add-multi-variable-gradient
   # lifts the single-variable guard for scalar-output functions: grad returns a
   # named list of per-variable gradients. d/dv sum(v+w) = 1 per coord of v;
   # d/dw = 1 per coord of w.
@@ -22,7 +22,7 @@ test_that("grad supports multi-variable input (add-multi-variable-gradient)", {
 })
 
 test_that("hessian supports multi-variable input (block Hessian)", {
-  # Previously out of scope (raised dat_not_definable); closed by
+  # Previously out of scope (raised DefDiff_not_definable); closed by
   # add-multi-variable-hessian. Returns a named list of named-list blocks.
   H <- do.call(hessian(function(v, w) sum(v^2) + sum(w^2)),
                list(v = c(1, 2, 3), w = c(4, 5)))
@@ -48,7 +48,7 @@ test_that("grad rejects variance form sum((v - mean(v))^2)", {
   # Requires recognition of mean() and (v - <vector>)^2 chain.
   expect_error(
     grad(function(v) sum((v - mean(v))^2)),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 
@@ -58,11 +58,11 @@ test_that("composing grad on hessian result errors", {
   # 3rd-order: grad of Hessian's matrix-valued function isn't supported.
   # The Hessian body is `diag(rep(2, length(v)))` which references `diag`
   # — not a recognized generator in the L_3 catalog, so .grad_expr's
-  # lookup raises dat_unknown_generator.
+  # lookup raises DefDiff_unknown_generator.
   hf <- hessian(function(v) sum(v^2))
   expect_error(
     grad(hf),
-    class = "dat_unknown_generator"
+    class = "DefDiff_unknown_generator"
   )
 })
 
@@ -99,7 +99,7 @@ test_that("hessian rejects vector-denominator quotients (remaining boundary)", {
   # A quotient whose denominator is vector-valued is outside the scalar-output
   # contract; locked as the remaining quotient boundary.
   expect_error(
-    dat:::.jacobian_inner(quote(v / sin(v)), "v", "v"),
+    DefDiff:::.jacobian_inner(quote(v / sin(v)), "v", "v"),
     class = "hessian_not_supported"
   )
 })
@@ -109,30 +109,30 @@ test_that("hessian rejects vector-denominator quotients (remaining boundary)", {
 test_that("grad rejects unknown elementwise inside sum()", {
   # `gamma` not recognized by .sum_rule's elementwise switch → falls into
   # the "sum(...) not recognised in default catalog" branch which raises
-  # dat_not_definable. Different from dat_unknown_generator (which arises
+  # DefDiff_not_definable. Different from DefDiff_unknown_generator (which arises
   # when the unknown function is the outer-most call, not inside sum).
   expect_error(
     grad(function(v) sum(gamma(v))),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 
 test_that("grad rejects bare unknown generator", {
-  # gamma(v) at top level → dat_unknown_generator via .lookup_derivative miss
+  # gamma(v) at top level → DefDiff_unknown_generator via .lookup_derivative miss
   expect_error(
     grad(function(v) gamma(v)),
-    class = "dat_unknown_generator"
+    class = "DefDiff_unknown_generator"
   )
 })
 
 test_that("hessian rejects sum(gamma(v)) by propagating the grad condition", {
   # The recursive walker computes the gradient first; gamma is outside the
-  # differentiation catalog, so the grad engine's dat_not_definable propagates
+  # differentiation catalog, so the grad engine's DefDiff_not_definable propagates
   # unchanged (rather than hessian_not_supported, which is reserved for
   # gradients that are computable but shape-unsupported).
   expect_error(
     hessian(function(v) sum(gamma(v))),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 
@@ -141,7 +141,7 @@ test_that("hessian rejects sum(gamma(v)) by propagating the grad condition", {
 test_that("grad rejects if-else control flow in body", {
   expect_error(
     grad(function(v) if (v[1] > 0) sum(v^2) else 0),
-    class = "dat_not_definable"
+    class = "DefDiff_not_definable"
   )
 })
 
@@ -151,7 +151,7 @@ test_that("grad rejects for loop in body", {
     for (i in seq_along(v)) s <- s + v[i]^2
     s
   }
-  expect_error(grad(f), class = "dat_not_definable")
+  expect_error(grad(f), class = "DefDiff_not_definable")
 })
 
 # ---- Chain rule through affine: SUPPORTED in Tier 3 ----

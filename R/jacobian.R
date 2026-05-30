@@ -38,7 +38,7 @@ jacobian <- function(x, vars = NULL, ...) {
 #' @rdname jacobian
 jacobian.default <- function(x, vars = NULL, ...) {
   .dat_stop(
-    "dat_not_definable",
+    "DefDiff_not_definable",
     paste0("jacobian() does not have a method for class ", paste(class(x), collapse = "/"))
   )
 }
@@ -69,7 +69,7 @@ jacobian.default <- function(x, vars = NULL, ...) {
 #   - otherwise (a vector-valued body that is not an explicit c(...) assembly)
 #     -> jacobian_not_supported
 # Out-of-catalog or control-flow components propagate the grad engine's
-# condition (`dat_not_definable` / `dat_unknown_generator`) unchanged.
+# condition (`DefDiff_not_definable` / `DefDiff_unknown_generator`) unchanged.
 .jacobian_rows <- function(body_expr, var) {
   if (is.call(body_expr) && is.symbol(body_expr[[1L]]) &&
       identical(as.character(body_expr[[1L]]), "c")) {
@@ -105,7 +105,7 @@ jacobian.function <- function(x, vars = NULL, ...) {
   body_expr <- body(x)
   blocker <- .control_flow_block(body_expr)
   if (!is.na(blocker)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("Function body contains unsupported construct `", blocker,
                      "`; only straight-line vector-output expressions are supported."))
   }
@@ -122,7 +122,7 @@ jacobian.function <- function(x, vars = NULL, ...) {
 #' @rdname jacobian
 jacobian.call <- function(x, vars, ...) {
   if (missing(vars) || is.null(vars)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "jacobian() on a call requires `vars` (character vector of variable names).")
   }
   if (length(vars) != 1L) {
@@ -130,7 +130,7 @@ jacobian.call <- function(x, vars, ...) {
   }
   blocker <- .control_flow_block(x)
   if (!is.na(blocker)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("Expression contains unsupported construct `", blocker, "`."))
   }
   rhs <- .strip_paren(x)

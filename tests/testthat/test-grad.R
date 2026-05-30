@@ -1,11 +1,11 @@
 test_that("parse_expr normalises parenthesised calls", {
-  expect_equal(dat:::parse_expr(quote((v + w))), quote(v + w))
-  expect_equal(dat:::parse_expr(quote(((sum(v^2))))), quote(sum(v^2)))
-  expect_equal(dat:::parse_expr(quote(v)), quote(v))
+  expect_equal(DefDiff:::parse_expr(quote((v + w))), quote(v + w))
+  expect_equal(DefDiff:::parse_expr(quote(((sum(v^2))))), quote(sum(v^2)))
+  expect_equal(DefDiff:::parse_expr(quote(v)), quote(v))
 })
 
 test_that("grad_expr handles atomic generators (sum norm-squared)", {
-  result <- dat:::.grad_expr(quote(sum(v^2)), "v")
+  result <- DefDiff:::.grad_expr(quote(sum(v^2)), "v")
   expect_equal(result, quote(2 * v))
 })
 
@@ -59,13 +59,13 @@ test_that("compositional rules (sum/product/scalar) pass on 5 cases", {
 test_that("unknown generator raises typed condition", {
   expect_error(
     grad(quote(novel_function(v)), "v"),
-    class = "dat_unknown_generator"
+    class = "DefDiff_unknown_generator"
   )
 })
 
-test_that("if-statement raises dat_not_definable", {
+test_that("if-statement raises DefDiff_not_definable", {
   f <- function(v) if (v[1] > 0) sum(v^2) else 0
-  expect_error(grad(f), class = "dat_not_definable")
+  expect_error(grad(f), class = "DefDiff_not_definable")
 })
 
 test_that("quadratic form crossprod(v, A %*% v) returns (A + t(A)) %*% v", {

@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(dat)
+library(DefDiff)
 
-test_check("dat")
+test_check("DefDiff")

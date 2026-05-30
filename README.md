@@ -1,6 +1,6 @@
-# dat — Definable Differentiation for R
+# DefDiff — Definable Differentiation for R
 
-> The name **`dat`** comes from **D**efinable **A**lgebra **T**heory (DAT); this package is its differentiation reference implementation.
+> **`DefDiff`** = **Def**inable **Diff**erentiation — the differentiation reference implementation of the Definable Algebra Theory (DAT) framework.
 
 Closed-form symbolic differentiation for vector calculus in R. The `grad()`,
 `hessian()`, and `jacobian()` operators source-transform an R function into a
@@ -17,13 +17,13 @@ builds and installs with the standard R + Xcode command-line toolchain.
 
 ```r
 # install.packages("remotes")
-remotes::install_github("PsychQuantR/definable-calculus-r")
+remotes::install_github("PsychQuantR/DefDiff")
 ```
 
 ## Usage
 
 ```r
-library(dat)
+library(DefDiff)
 
 gf <- grad(function(v) sum(v^2))
 gf(c(1, 2, 3))                       # 2 4 6

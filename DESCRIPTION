@@ -1,6 +1,6 @@
-Package: dat
+Package: DefDiff
 Type: Package
-Title: Definable Algebra Theory: Symbolic Differentiation with Language-Level Awareness
+Title: DefDiff: Definable Differentiation for Vector Calculus with Language-Level Awareness
 Version: 0.1.0
 Authors@R: person("Che", "Cheng", email = "lufee2005@gmail.com",
                   role = c("aut", "cre"))
@@ -31,6 +31,6 @@ Suggests:
     devtools,
     bench
 Config/testthat/edition: 3
-URL: https://github.com/PsychQuantR/definable-calculus-r
-BugReports: https://github.com/PsychQuantR/definable-calculus-r/issues
+URL: https://github.com/PsychQuantR/DefDiff
+BugReports: https://github.com/PsychQuantR/DefDiff/issues
 Config/roxygen2/version: 8.0.0

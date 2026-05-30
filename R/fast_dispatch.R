@@ -25,10 +25,10 @@
   if (!is.null(cached)) return(cached)
   ok <- tryCatch({
     is_mac <- identical(Sys.info()[["sysname"]], "Darwin")
-    has_fn <- exists("metal_scalar_mul_init", where = asNamespace("dat"),
+    has_fn <- exists("metal_scalar_mul_init", where = asNamespace("DefDiff"),
                      inherits = FALSE)
     lib <- if (is_mac && has_fn) {
-      system.file("metal", "scalar_mul.metallib", package = "dat")
+      system.file("metal", "scalar_mul.metallib", package = "DefDiff")
     } else ""
     is_mac && has_fn && nzchar(lib) && file.exists(lib) &&
       isTRUE(metal_scalar_mul_init(lib))

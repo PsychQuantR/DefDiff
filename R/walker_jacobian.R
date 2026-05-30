@@ -162,7 +162,7 @@
 #     This applies the chain rule from the scalar `sum`/`crossprod` output
 #     back to the input variable.
 #   - Shim with NULL pullback → unrecognized generator combination; raise
-#     dat_not_definable so .sum_rule's tryCatch surfaces it.
+#     DefDiff_not_definable so .sum_rule's tryCatch surfaces it.
 #   - Bare AST (defensive) → return as-is. Walker no longer emits these for
 #     recognized generators, but this preserves legacy behavior in case a
 #     custom L_0 rule registered via `extend_language()` returns bare.
@@ -171,7 +171,7 @@
   if (is.list(walker_result) && !is.null(walker_result$value)) {
     pullback <- walker_result$pullback
     if (is.null(pullback)) {
-      .dat_stop("dat_not_definable",
+      .dat_stop("DefDiff_not_definable",
                 paste0("sum(", deparse(inner_expr),
                        "): walker returned a shim with no pullback"))
     }

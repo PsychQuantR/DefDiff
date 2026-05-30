@@ -44,7 +44,7 @@
     return(list(value = expr, pullback = .make_pullback_zero(n_expr)))
   }
   if (!is.symbol(expr[[1L]])) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("non-symbol function head in .grad_inner: ", deparse(expr)))
   }
   op <- as.character(expr[[1L]])
@@ -198,7 +198,7 @@
   }
 
   # Function not recognized in walker switch or L_0 catalog
-  .dat_stop("dat_unknown_generator",
+  .dat_stop("DefDiff_unknown_generator",
             paste0("Unknown L_3 generator in .grad_inner: ", op,
                    ". Use extend_language() to register a rule."))
 }

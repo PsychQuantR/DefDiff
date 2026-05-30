@@ -6,20 +6,20 @@
 ##
 ## NOTE on eval(): tests use eval() to numerically verify pullback ASTs.
 ## The ASTs are constructed by trusted code (this file's own bquote/quote
-## calls + the dat:::.make_pullback_* helpers). No external/user input is
+## calls + the DefDiff:::.make_pullback_* helpers). No external/user input is
 ## passed to eval — this is symbolic-AST verification, not arbitrary code
 ## execution. Safe and intentional.
 
 # Shorthand accessors (helpers are internal)
-make_id    <- function() dat:::.make_pullback_identity()
-make_zero  <- function(n_expr) dat:::.make_pullback_zero(n_expr)
-make_add   <- function(p_a, p_b) dat:::.make_pullback_add(p_a, p_b)
-make_sub   <- function(p_a, p_b) dat:::.make_pullback_sub(p_a, p_b)
-make_mul   <- function(p_a, val_a, p_b, val_b) dat:::.make_pullback_mul(p_a, val_a, p_b, val_b)
-make_div   <- function(p_a, val_a, p_b, val_b) dat:::.make_pullback_div(p_a, val_a, p_b, val_b)
-make_pow   <- function(p_a, val_a, k) dat:::.make_pullback_pow(p_a, val_a, k)
-make_chain <- function(p_inner, f_deriv_ast) dat:::.make_pullback_chain(p_inner, f_deriv_ast)
-make_matmul <- function(p_inner, W) dat:::.make_pullback_matmul(p_inner, W)
+make_id    <- function() DefDiff:::.make_pullback_identity()
+make_zero  <- function(n_expr) DefDiff:::.make_pullback_zero(n_expr)
+make_add   <- function(p_a, p_b) DefDiff:::.make_pullback_add(p_a, p_b)
+make_sub   <- function(p_a, p_b) DefDiff:::.make_pullback_sub(p_a, p_b)
+make_mul   <- function(p_a, val_a, p_b, val_b) DefDiff:::.make_pullback_mul(p_a, val_a, p_b, val_b)
+make_div   <- function(p_a, val_a, p_b, val_b) DefDiff:::.make_pullback_div(p_a, val_a, p_b, val_b)
+make_pow   <- function(p_a, val_a, k) DefDiff:::.make_pullback_pow(p_a, val_a, k)
+make_chain <- function(p_inner, f_deriv_ast) DefDiff:::.make_pullback_chain(p_inner, f_deriv_ast)
+make_matmul <- function(p_inner, W) DefDiff:::.make_pullback_matmul(p_inner, W)
 
 # ===== 1-9: Each constructor returns a function-of-AST =====
 
@@ -139,6 +139,6 @@ test_that("Phase 1 deliverable: no walker changes, existing suite unaffected", {
   # External verification: testthat::test_local() reports 592+ PASS / 0 FAIL.
   # This test_that block exists to make the regression guard explicit in
   # the change's test record.
-  expect_true(exists(".make_pullback_identity", envir = asNamespace("dat")))
-  expect_true(exists(".make_pullback_matmul",   envir = asNamespace("dat")))
+  expect_true(exists(".make_pullback_identity", envir = asNamespace("DefDiff")))
+  expect_true(exists(".make_pullback_matmul",   envir = asNamespace("DefDiff")))
 })

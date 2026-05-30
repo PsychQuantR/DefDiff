@@ -31,7 +31,7 @@ grad <- function(x, vars = NULL, ...) {
 #' @rdname grad
 grad.default <- function(x, vars = NULL, ...) {
   .dat_stop(
-    "dat_not_definable",
+    "DefDiff_not_definable",
     paste0("grad() does not have a method for class ", paste(class(x), collapse = "/"))
   )
 }
@@ -60,7 +60,7 @@ grad.default <- function(x, vars = NULL, ...) {
       # without `:::`.
       return(bquote(
         if (.metal_path_available() &&
-            length(.(canonical$var)) >= getOption("dat.metal_threshold", 1e9L))
+            length(.(canonical$var)) >= getOption("DefDiff.metal_threshold", 1e9L))
           metal_scalar_mul(.(canonical$scalar), .(canonical$var))
         else
           fast_scalar_mul(.(canonical$scalar), .(canonical$var))
@@ -143,7 +143,7 @@ grad.function <- function(x, vars = NULL, ...) {
   body_expr <- body(x)
   blocker <- .control_flow_block(body_expr)
   if (!is.na(blocker)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("Function body contains unsupported construct `", blocker,
                      "`; only straight-line scalar expressions are supported."))
   }
@@ -168,12 +168,12 @@ grad.function <- function(x, vars = NULL, ...) {
 #' @rdname grad
 grad.call <- function(x, vars, ...) {
   if (missing(vars) || is.null(vars)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "grad() on a call requires `vars` (character vector of variable names).")
   }
   blocker <- .control_flow_block(x)
   if (!is.na(blocker)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("Expression contains unsupported construct `", blocker, "`."))
   }
   rhs <- .strip_paren(x)
@@ -191,7 +191,7 @@ grad.call <- function(x, vars, ...) {
 #' @rdname grad
 grad.expression <- function(x, vars, ...) {
   if (length(x) != 1L) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "grad() supports single-element expression objects in v0.1.")
   }
   result <- grad.call(x[[1L]], vars = vars, ...)
@@ -226,7 +226,7 @@ grad.formula <- function(x, vars = NULL, ...) {
     lhs <- x[[2L]]
     rhs <- x[[3L]]
   } else {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "formula input must be one-sided (`~ rhs`) or two-sided (`lhs ~ rhs`).")
   }
 
@@ -235,7 +235,7 @@ grad.formula <- function(x, vars = NULL, ...) {
   if (is.null(vars)) {
     candidates <- all.vars(rhs)
     if (length(candidates) == 0L) {
-      .dat_stop("dat_not_definable",
+      .dat_stop("DefDiff_not_definable",
                 "RHS contains no free variables; gradient is trivially 0. Pass `vars` explicitly to confirm intent.")
     }
     vars <- candidates
@@ -243,7 +243,7 @@ grad.formula <- function(x, vars = NULL, ...) {
 
   blocker <- .control_flow_block(rhs)
   if (!is.na(blocker)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("Formula RHS contains unsupported construct `", blocker, "`."))
   }
 
@@ -292,7 +292,7 @@ NULL
   if (is.symbol(expr)) {
     if (identical(as.character(expr), var)) {
       .dat_stop(
-        "dat_not_definable",
+        "DefDiff_not_definable",
         paste0("Variable `", var, "` appears at a position where a scalar ",
                "expression is required by v0.1 catalog. Wrap inside a scalar ",
                "reduction such as sum() or crossprod().")
@@ -304,13 +304,13 @@ NULL
     return(0)
   }
   if (!is.call(expr)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("Unsupported AST node of class ", paste(class(expr), collapse = "/")))
   }
 
   head_sym <- expr[[1L]]
   if (!is.symbol(head_sym)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "Non-symbol function head not supported in v0.1.")
   }
   fname <- as.character(head_sym)
@@ -320,7 +320,7 @@ NULL
   rule <- .lookup_derivative(fname)
   if (is.null(rule)) {
     .dat_stop(
-      "dat_unknown_generator",
+      "DefDiff_unknown_generator",
       paste0("Unknown generator `", fname, "`. Use extend_language() to ",
              "register a rule, or check that the function is part of the ",
              "intended L_i catalog.")

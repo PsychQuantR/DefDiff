@@ -12,7 +12,7 @@
 ##   bare v        -> jacobian sentinel (NULL); next %*% emits W directly
 ##   W %*% inner   -> (W %*% value_in, W %*% jac_in)
 ##   f(inner)      -> (f(value_in), f'(value_in) * jac_in)   [row-broadcast]
-##   anything else -> raise dat_not_definable (out of chain scope)
+##   anything else -> raise DefDiff_not_definable (out of chain scope)
 ##
 ## Hooked from .sum_rule in generators.R; final sum collapses jacobian via
 ## colSums to produce the n-vector gradient.
@@ -26,14 +26,14 @@
   }
 
   if (!is.call(expr)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               paste0("elementwise_matmul_chain: leaf is not bare variable: ",
                      deparse(expr)))
   }
 
   head_sym <- expr[[1L]]
   if (!is.symbol(head_sym)) {
-    .dat_stop("dat_not_definable",
+    .dat_stop("DefDiff_not_definable",
               "elementwise_matmul_chain: non-symbol function head")
   }
 
@@ -42,7 +42,7 @@
     W <- expr[[2L]]
     inner <- expr[[3L]]
     if (.contains_var(W, var)) {
-      .dat_stop("dat_not_definable",
+      .dat_stop("DefDiff_not_definable",
                 paste0("elementwise_matmul_chain: %*% first operand contains var: ",
                        deparse(W)))
     }
@@ -64,7 +64,7 @@
       sub <- .elementwise_matmul_chain_grad(expr[[2L]], var)
       if (is.null(sub$jacobian)) {
         # vForce(bare v) — not a chain; let single-layer fast path handle it
-        .dat_stop("dat_not_definable",
+        .dat_stop("DefDiff_not_definable",
                   "elementwise_matmul_chain: vForce of bare var is not a chain")
       }
       # f'(value) AST with sign per function. Wrap with as.numeric() so the
@@ -85,7 +85,7 @@
   }
 
   # Case 4: anything else — out of chain scope
-  .dat_stop("dat_not_definable",
+  .dat_stop("DefDiff_not_definable",
             paste0("elementwise_matmul_chain: unsupported expression shape: ",
                    deparse(expr)))
 }

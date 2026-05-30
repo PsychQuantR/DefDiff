@@ -4,7 +4,7 @@
 ## idempotence + non-call passthrough. 3 integration tests verify the
 ## hook into .grad_expr restores Tier 1 fast-path dispatch.
 
-simplify <- dat:::.algebraic_simplify
+simplify <- DefDiff:::.algebraic_simplify
 
 # ---- Rules 1 & 2: exp(log(x)) / log(exp(x)) inverse pairs ----
 
