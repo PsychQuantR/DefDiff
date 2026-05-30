@@ -1,5 +1,7 @@
 # dat — Definable Differentiation for R
 
+> The name **`dat`** comes from **D**efinable **A**lgebra **T**heory (DAT); this package is its differentiation reference implementation.
+
 Closed-form symbolic differentiation for vector calculus in R. The `grad()`,
 `hessian()`, and `jacobian()` operators source-transform an R function into a
 new R function that returns the exact derivative — no finite differences and no
