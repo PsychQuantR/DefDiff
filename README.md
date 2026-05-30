@@ -41,4 +41,6 @@ See `NEWS.md` for the capability set. Correctness is verified against
 ---
 
 This repository is a **published mirror** of the installable package, generated
-from a private source-of-truth repo. Do not open PRs here; file issues instead.
+from a private source-of-truth repo. **Found a bug or want a feature? Open an
+issue here** — this is the right place to report. Pull requests are not
+accepted on the mirror (the source lives elsewhere); please file an issue.
