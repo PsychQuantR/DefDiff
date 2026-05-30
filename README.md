@@ -17,7 +17,7 @@ builds and installs with the standard R + Xcode command-line toolchain.
 
 ```r
 # install.packages("remotes")
-remotes::install_github("PsychQuant/definable-calculus-r")
+remotes::install_github("PsychQuantR/definable-calculus-r")
 ```
 
 ## Usage
