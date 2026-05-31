@@ -25,8 +25,8 @@ scalar functions).
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/PsychQuantR/definable-calculus-r}
-  \item Report bugs at \url{https://github.com/PsychQuantR/definable-calculus-r/issues}
+  \item \url{https://github.com/PsychQuantR/DefDiff}
+  \item Report bugs at \url{https://github.com/PsychQuantR/DefDiff/issues}
 }
 
 }
