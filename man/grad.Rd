@@ -30,7 +30,10 @@ defaults to `names(formals(x))`.}
 \item{...}{Reserved for future use.}
 }
 \value{
-The symbolic gradient. Type matches input.
+The symbolic gradient. Type matches input. For \code{function}
+  input the result is a gradient \emph{function}; on macOS its \code{body()}
+  is typically a fast-path kernel call rather than the symbolic AST, so
+  recover the symbolic form with \code{\link{grad_expr}}.
 }
 \description{
 Compute the symbolic gradient of a scalar-valued function of a vector

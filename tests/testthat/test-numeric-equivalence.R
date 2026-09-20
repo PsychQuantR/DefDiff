@@ -175,3 +175,45 @@ test_that("jacobian: vector-of-reductions Jacobian matches numDeriv", {
   expect_equal(J[2, ], cos(v), tolerance = TOL_EXACT)
   expect_equal(J[3, ], exp(v), tolerance = TOL_EXACT)
 })
+
+test_that("fused-JIT backend matches finite-difference oracle and closed form", {
+  skip_if(!DefDiff:::.jit_path_available())
+  withr::local_options(DefDiff.jit_threshold = 500L)   # force the fused path
+  f3 <- function(v) sum(v^3)
+  gf3 <- grad(f3)
+  set.seed(101); x <- rnorm(2000)
+  g <- gf3(x)                                          # via fused kernel
+  expect_equal(g, 3 * x^2, tolerance = TOL_EXACT)      # closed form
+  # oracle on a smaller x (cfd is O(n) function evals)
+  xs <- rnorm(40)
+  expect_equal(grad(f3)(xs), cfd_grad(f3, xs), tolerance = TOL_FD)
+})
+
+test_that("single-pass fused-JIT backend matches oracle and closed form (2*v)", {
+  skip_if(!DefDiff:::.jit_path_available())
+  withr::local_options(DefDiff.jit_threshold = 500L)   # force the fused path at n >= 500
+  f2 <- function(v) sum(v^2)
+  set.seed(111); x <- rnorm(2000)
+  expect_equal(grad(f2)(x), 2 * x, tolerance = TOL_EXACT)   # via fused kernel
+  xs <- rnorm(40)                                            # n < threshold -> base path
+  expect_equal(grad(f2)(xs), cfd_grad(f2, xs), tolerance = TOL_FD)
+})
+
+test_that("threaded reductions match stock sums within tolerance (add-threaded-reduction-kernels)", {
+  skip_on_os(c("windows", "linux", "solaris"))   # macOS Accelerate only
+  skip_if(!DefDiff:::.fast_path_available())
+  withr::local_options(DefDiff.reduce_threshold = 1000L, DefDiff.jit_threads = 4L)
+  set.seed(42); v <- rnorm(50000)                # n >= threshold -> threaded path
+  expect_equal(fast_sum_sq(v), sum(v^2), tolerance = 1e-10)
+  expect_equal(fast_sum_pow(v, 3L), sum(v^3), tolerance = 1e-10)
+  expect_equal(fast_sum_pow(v, 4L), sum(v^4), tolerance = 1e-10)
+})
+
+test_that("below the reduce threshold the reduction is byte-for-byte single-threaded", {
+  skip_on_os(c("windows", "linux", "solaris"))
+  skip_if(!DefDiff:::.fast_path_available())
+  set.seed(43); v <- rnorm(500)
+  a <- withr::with_options(list(DefDiff.reduce_threshold = 1000L), fast_sum_sq(v))  # below -> single
+  b <- withr::with_options(list(DefDiff.reduce_threshold = Inf),   fast_sum_sq(v))  # forced single
+  expect_identical(a, b)
+})

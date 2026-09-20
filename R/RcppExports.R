@@ -163,6 +163,21 @@ fast_vec_div <- function(numerator, denominator) {
     .Call(`_DefDiff_fast_vec_div`, numerator, denominator)
 }
 
+#' Apply a runtime-compiled fused gradient kernel across worker threads
+#'
+#' Internal. Splits the element range across `nthreads` workers, each calling
+#' the compiled kernel on its disjoint slice. The kernel pointer comes from
+#' \code{getNativeSymbolInfo(...)$address} of a dyn.load'd runtime .so.
+#'
+#' @param kernel_ptr An externalptr (NativeSymbol) to the compiled kernel.
+#' @param v Numeric input vector.
+#' @param scalars Numeric vector of hoisted scalars (length 0 allowed).
+#' @param nthreads Worker thread count (>= 1).
+#' @return Numeric vector \code{out} of the same length as \code{v}.
+dat_fused_apply <- function(kernel_ptr, v, scalars, nthreads) {
+    .Call(`_DefDiff_dat_fused_apply`, kernel_ptr, v, scalars, nthreads)
+}
+
 #' Initialize the Metal scalar-multiply pipeline (internal)
 #'
 #' Loads the pre-compiled metallib and builds the compute pipeline. Returns

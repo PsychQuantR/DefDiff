@@ -1,7 +1,7 @@
 test_that(".dat_env$catalog structure matches spec", {
   DefDiff:::register_default_catalog()
   cat <- DefDiff:::.dat_env$catalog
-  expect_named(cat, c("L_0", "L_1", "L_2", "L_3"))
+  expect_named(cat, c("L_0", "L_1", "L_2", "L_3", "L_4"))
   expect_true(is.list(cat$L_0))
   expect_true(is.list(cat$L_3))
 })
@@ -45,7 +45,7 @@ test_that("register_default_catalog resets user-added generators", {
 test_that("language_catalog returns full list or filtered vector", {
   DefDiff:::register_default_catalog()
   full <- language_catalog()
-  expect_named(full, c("L_0", "L_1", "L_2", "L_3"))
+  expect_named(full, c("L_0", "L_1", "L_2", "L_3", "L_4"))
 
   l3 <- language_catalog("L_3")
   expect_type(l3, "character")

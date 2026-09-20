@@ -8,14 +8,14 @@
 .dat_env <- new.env(parent = emptyenv())
 
 # Valid language tiers
-.dat_levels <- c("L_0", "L_1", "L_2", "L_3")
+.dat_levels <- c("L_0", "L_1", "L_2", "L_3", "L_4")
 
 # Numeric ordering for tier comparison (L_0 < L_1 < L_2 < L_3 < unknown)
 .level_rank <- function(level) {
   if (is.null(level) || length(level) != 1L) {
     return(NA_integer_)
   }
-  ranks <- c(L_0 = 0L, L_1 = 1L, L_2 = 2L, L_3 = 3L, unknown = 4L)
+  ranks <- c(L_0 = 0L, L_1 = 1L, L_2 = 2L, L_3 = 3L, L_4 = 4L, unknown = 5L)
   rank <- ranks[level]
   if (is.na(rank)) NA_integer_ else unname(rank)
 }
@@ -48,7 +48,7 @@ extend_language <- function(level, name, derivative) {
     .dat_stop(
       "DefDiff_invalid_extension",
       paste0(
-        "Invalid `level` argument: must be one of L_0, L_1, L_2, L_3; got ",
+        "Invalid `level` argument: must be one of L_0, L_1, L_2, L_3, L_4; got ",
         deparse(level)
       )
     )
@@ -63,6 +63,12 @@ extend_language <- function(level, name, derivative) {
     .dat_stop(
       "DefDiff_invalid_extension",
       paste0("Invalid `derivative` argument: must be a function; got ", typeof(derivative))
+    )
+  }
+  if (name %in% .l4_binder_heads) {
+    .dat_stop(
+      "DefDiff_invalid_extension",
+      paste0("`", name, "` is a reserved L_4 binder head and cannot be re-registered.")
     )
   }
   .dat_env$catalog[[level]][[name]] <- derivative
@@ -110,7 +116,7 @@ language_catalog <- function(level = NULL) {
 #' Reset the catalog to default generators
 #'
 #' Internal entry point for tests and reload. Wipes any user-added
-#' generators and restores the shipped default catalog (L_0 through L_3).
+#' generators and restores the shipped default catalog (L_0 through L_4).
 #'
 #' @return Invisibly `TRUE`.
 #' @keywords internal
@@ -119,17 +125,19 @@ register_default_catalog <- function() {
     L_0 = list(),
     L_1 = list(),
     L_2 = list(),
-    L_3 = list()
+    L_3 = list(),
+    L_4 = list()
   )
   .register_L0()
   .register_L1()
   .register_L2()
   .register_L3()
+  .register_L4()
   invisible(TRUE)
 }
 
 # Look up a generator's tier in the active catalog.
-# Returns one of "L_0", "L_1", "L_2", "L_3", or NA_character_ if absent.
+# Returns one of "L_0", "L_1", "L_2", "L_3", "L_4", or NA_character_ if absent.
 .lookup_level <- function(name) {
   for (lvl in .dat_levels) {
     if (!is.null(.dat_env$catalog[[lvl]][[name]])) {

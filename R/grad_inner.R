@@ -183,6 +183,12 @@
     }
   }
 
+  # L_4 binder nodes (add-l4-integral-implicit-nodes): Leibniz rule and
+  # implicit function theorem live in l4_nodes.R; they return a shim.
+  if (.is_binder_head(op)) {
+    return(.l4_grad_inner(expr, var))
+  }
+
   # L_0 catalog fallback (Tier 4 change `add-walker-l0-fallback`).
   # L_0 rules emit a per-coord gradient AST (e.g., rep returns `0` for
   # constant patterns). Phase 6 wraps this in a shim via

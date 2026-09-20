@@ -616,3 +616,94 @@ test_that("threshold guard is load-bearing: default vDSP path far faster than fo
   # GPU launch dominate). Assert default < metal/10 (~13x slack); unflakeable.
   expect_lt(default_med, metal_med / 10)
 })
+test_that("fused-JIT path beats the vDSP multi-pass baseline on sum(v^3) (add-fused-jit-grad-backend)", {
+  skip_on_cran(); skip_on_ci()
+  skip_if_not_installed("bench")
+  skip_on_os(c("windows", "linux", "solaris"))
+  skip_if(!DefDiff:::.jit_path_available())
+  gf <- grad(function(v) sum(v^3))
+  set.seed(202); v <- rnorm(1e7)
+  st <- DefDiff:::.dat_jit_state
+  options(DefDiff.jit_threshold = 1e5L)
+  on.exit({ options(DefDiff.jit_disable = FALSE, DefDiff.jit_threshold = NULL); st$available <- NULL }, add = TRUE)
+  options(DefDiff.jit_disable = FALSE); st$available <- NULL
+  b_fused <- bench::mark(gf(v), iterations = 5, check = FALSE)
+  options(DefDiff.jit_disable = TRUE); st$available <- NULL
+  b_base  <- bench::mark(gf(v), iterations = 5, check = FALSE)
+  # one-sided: fused median strictly below the vDSP multi-pass median
+  expect_lt(as.numeric(b_fused$median), as.numeric(b_base$median))
+})
+
+test_that("fused-JIT single-pass beats single-thread vDSP on sum(v^2) (extend-fused-jit-single-pass)", {
+  skip_on_cran(); skip_on_ci()
+  skip_if_not_installed("bench")
+  skip_on_os(c("windows", "linux", "solaris"))
+  skip_if(!DefDiff:::.jit_path_available())
+  gf <- grad(function(v) sum(v^2))     # 2*v: single-pass, Metal-eligible; metal_threshold default 1e9 > 1e7
+  set.seed(303); v <- rnorm(1e7)
+  st <- DefDiff:::.dat_jit_state
+  options(DefDiff.jit_threshold = 1e5L)
+  on.exit({ options(DefDiff.jit_disable = FALSE, DefDiff.jit_threshold = NULL); st$available <- NULL }, add = TRUE)
+  options(DefDiff.jit_disable = FALSE); st$available <- NULL; invisible(gf(v))   # warm/compile
+  b_fused <- bench::mark(gf(v), iterations = 5, check = FALSE)
+  options(DefDiff.jit_disable = TRUE); st$available <- NULL; invisible(gf(v))
+  b_base  <- bench::mark(gf(v), iterations = 5, check = FALSE)  # single-thread vDSP fast_scalar_mul
+  expect_lt(as.numeric(b_fused$median), as.numeric(b_base$median))
+})
+
+test_that("threaded reduction beats single-thread vDSP at large n (add-threaded-reduction-kernels)", {
+  skip_on_cran(); skip_on_ci()
+  skip_if_not_installed("bench")
+  skip_on_os(c("windows", "linux", "solaris"))
+  skip_if(!DefDiff:::.fast_path_available())
+  set.seed(204); v <- rnorm(1e7)
+  on.exit(options(DefDiff.reduce_threshold = NULL, DefDiff.jit_threads = NULL), add = TRUE)
+  options(DefDiff.jit_threads = 8L)
+  options(DefDiff.reduce_threshold = 1e5L); invisible(fast_sum_sq(v))
+  bt <- bench::mark(fast_sum_sq(v), iterations = 8, check = FALSE)
+  options(DefDiff.reduce_threshold = Inf); invisible(fast_sum_sq(v))
+  bs <- bench::mark(fast_sum_sq(v), iterations = 8, check = FALSE)
+  expect_lt(as.numeric(bt$median), as.numeric(bs$median))
+})
+
+test_that("threading the reduction preamble improves sin(sum(v^2)) at large n", {
+  skip_on_cran(); skip_on_ci()
+  skip_if_not_installed("bench")
+  skip_on_os(c("windows", "linux", "solaris"))
+  skip_if(!DefDiff:::.jit_path_available())
+  gf <- grad(function(v) sin(sum(v^2)))
+  set.seed(205); v <- rnorm(1e7)
+  on.exit(options(DefDiff.reduce_threshold = NULL, DefDiff.jit_threshold = NULL, DefDiff.jit_threads = NULL), add = TRUE)
+  options(DefDiff.jit_threshold = 1e5L, DefDiff.jit_threads = 8L)
+  options(DefDiff.reduce_threshold = 1e5L); invisible(gf(v))
+  ca <- bench::mark(gf(v), iterations = 8, check = FALSE)
+  options(DefDiff.reduce_threshold = Inf); invisible(gf(v))
+  cb <- bench::mark(gf(v), iterations = 8, check = FALSE)
+  expect_lt(as.numeric(ca$median), as.numeric(cb$median))
+})
+
+# ---- auto-tune large-n speed-claim guard (#6, opt-in) ----
+# Guards the headline "DD wins from ~1e6" claim: at n=1e8 auto-tune must LEARN
+# "fused" (the genuinely faster path). Gated behind DAT_LARGE_BENCH=1 (allocates
+# ~800MB + probes), so it doesn't bloat every local/CI run but is a real guard a
+# maintainer runs. Asserts the learned CHOICE (robust) rather than a brittle
+# absolute-ms ratio.
+test_that("[gated] auto-tune learns 'fused' at n=1e8 (#6 speed-claim guard)", {
+  skip_on_cran()
+  skip_if(!identical(Sys.getenv("DAT_LARGE_BENCH"), "1"),
+          "set DAT_LARGE_BENCH=1 to run the 1e8 auto-tune guard")
+  dat_ns <- asNamespace("DefDiff")
+  jit_ready <- isTRUE(tryCatch(get(".jit_path_available", dat_ns)(), error = function(e) FALSE))
+  skip_if_not(jit_ready, "JIT path not available")
+  st <- get(".dat_jit_state", dat_ns); lower <- get(".lower_fused_cpp", dat_ns)
+  withr::local_options(DefDiff.jit_threshold = NULL, DefDiff.autotune = TRUE,
+                       DefDiff.jit_threads = 8L)
+  rm(list = ls(st$pathchoice), envir = st$pathchoice)
+  gf <- grad(function(v) sum(v^3))
+  set.seed(1); v <- rnorm(1e8)
+  invisible(gf(v))                                   # probe at this (shape, bucket)
+  key <- paste0(lower(quote(3 * v^2), "v")$cache_key, "@", floor(2 * log10(length(v))))
+  learned <- st$pathchoice[[key]]
+  expect_false(is.null(learned))
+  expect_identical(learned$choice, "fused")
+})

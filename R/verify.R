@@ -32,12 +32,33 @@ verify_grad <- function(f, gf, n_samples = 100L, sample_dim = 3L, tol = 1e-6) {
   set.seed(1234L)
   samples <- matrix(stats::runif(n_samples * sample_dim, -1, 1),
                     nrow = n_samples, ncol = sample_dim)
+  # L_4 tolerance tier (add-l4-integral-implicit-nodes, Decision 7): quadrature
+  # error composed with central differences exceeds 1e-6 in practice, so a
+  # gradient containing integral / implicit nodes is checked at max(tol, 1e-4)
+  # and the widening is recorded in the result.
+  l4 <- .gf_has_l4_nodes(gf)
+  tol_effective <- if (l4) max(tol, 1e-4) else tol
+  numeric <- .verify_numeric(f, gf, samples, tol_effective)
+  numeric$l4_tolerance_widened <- l4
+  numeric$tol_effective <- tol_effective
   result <- list(
     syntactic      = .verify_syntactic(f, gf),
-    numeric        = .verify_numeric(f, gf, samples, tol),
+    numeric        = numeric,
+    # The widening applies to the numeric layer only (spec: numeric
+    # finite-difference check); the cross-strategy oracle keeps the caller's tol.
     cross_strategy = .verify_cross_strategy(f, gf, samples, tol)
   )
   structure(result, class = "DefDiff_verify_result")
+}
+
+# TRUE iff the symbolic gradient of `gf` (grad_expr attribute when present,
+# else its body) contains an L_4 binder node.
+.gf_has_l4_nodes <- function(gf) {
+  sym <- attr(gf, "grad_expr")
+  exprs <- if (is.null(sym)) list(body(gf)) else if (is.list(sym)) sym else list(sym)
+  # Scan call heads, not names: a variable that happens to be called
+  # `integral` must not widen the tolerance (verify #23 finding 4).
+  any(vapply(exprs, .has_binder_call, logical(1)))
 }
 
 # Layer 1: level(gf) is at most level(f).
@@ -58,7 +79,24 @@ verify_grad <- function(f, gf, n_samples = 100L, sample_dim = 3L, tol = 1e-6) {
   max_err <- 0
   for (i in seq_len(n)) {
     v <- samples[i, ]
-    fd <- .central_difference(f, v, eps)
+    # f itself may reject the sample (e.g. an L_4 scalar-parameter function
+    # called with a vector): report FAIL with a reason instead of aborting.
+    f_err <- NULL
+    fd <- tryCatch(.central_difference(f, v, eps),
+                   error = function(e) { f_err <<- conditionMessage(e); rep(NA_real_, d) })
+    if (!is.null(f_err)) {
+      return(list(pass = FALSE, max_abs_error = NA_real_,
+                  reason = paste0("f() errored on a sample of dimension ", d, ": ", f_err,
+                                  " (scalar-parameter functions need sample_dim = 1L)")))
+    }
+    if (length(fd) != d) {
+      return(list(pass = FALSE, max_abs_error = NA_real_,
+                  reason = paste0("f() returned length ", length(fd), " on a sample of dimension ", d)))
+    }
+    if (any(!is.finite(fd))) {
+      return(list(pass = FALSE, max_abs_error = NA_real_,
+                  reason = "f() returned a non-finite value at a sample point"))
+    }
     ag <- tryCatch(as.numeric(gf(v)),
                    error = function(e) rep(NA_real_, d))
     if (any(is.na(ag)) || length(ag) != d) {
@@ -119,12 +157,15 @@ print.DefDiff_verify_result <- function(x, ...) {
   cat(sprintf("Syntactic: %s  (level(f) = %s, level(gf) = %s)\n",
               if (s$pass) "PASS" else "FAIL", s$level_of_f, s$level_of_gf))
   n <- x$numeric
+  widened <- if (isTRUE(n$l4_tolerance_widened))
+    sprintf("; tol widened to %s (L_4 nodes present)", format(n$tol_effective)) else ""
   if (n$pass) {
-    cat(sprintf("Numeric: PASS  (max abs error = %.3g)\n", n$max_abs_error))
+    cat(sprintf("Numeric: PASS  (max abs error = %.3g%s)\n", n$max_abs_error, widened))
   } else {
-    cat(sprintf("Numeric: FAIL  (max abs error = %s%s)\n",
+    cat(sprintf("Numeric: FAIL  (max abs error = %s%s%s)\n",
                 if (is.na(n$max_abs_error)) "NA" else sprintf("%.3g", n$max_abs_error),
-                if (!is.null(n$reason)) paste0(" - ", n$reason) else ""))
+                if (!is.null(n$reason)) paste0(" - ", n$reason) else "",
+                widened))
   }
   c <- x$cross_strategy
   if (!is.null(c$status) && c$status == "skipped") {

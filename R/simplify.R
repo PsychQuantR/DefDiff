@@ -13,6 +13,10 @@
   # Strip top-level parens up front so subsequent matches see the bare AST.
   expr <- .strip_paren(expr)
   if (!is.call(expr)) return(expr)
+  # L_4 binder nodes are opaque to the simplifier (Decision 6): its rules
+  # assume a symbol absent from the free-variable set is a constant, which is
+  # false for the bound symbol inside the body.
+  if (.is_binder_call(expr)) return(expr)
 
   # Recurse first into arguments (bottom-up: simplify children before parent).
   # Strip parens after each child-recurse so e.g. (x) anywhere collapses to x.

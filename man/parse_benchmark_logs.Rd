@@ -29,8 +29,7 @@ valid logs in the same directory still parse.
 }
 \examples{
 \dontrun{
-parse_benchmark_logs(
-  system.file("benchmarks/community-logs", package = "DefDiff"),
-  out_csv = "community-benchmark.csv")
+# logs accumulate in the PsychQuantR/DefDiff-benchmark repo
+parse_benchmark_logs("community-logs", out_csv = "community-benchmark.csv")
 }
 }

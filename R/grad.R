@@ -11,7 +11,10 @@
 #' @param vars Character vector of variable names. For function input,
 #'   defaults to `names(formals(x))`.
 #' @param ... Reserved for future use.
-#' @return The symbolic gradient. Type matches input.
+#' @return The symbolic gradient. Type matches input. For \code{function}
+#'   input the result is a gradient \emph{function}; on macOS its \code{body()}
+#'   is typically a fast-path kernel call rather than the symbolic AST, so
+#'   recover the symbolic form with \code{\link{grad_expr}}.
 #' @export
 #' @examples
 #' # Function input
@@ -36,6 +39,18 @@ grad.default <- function(x, vars = NULL, ...) {
   )
 }
 
+# Top-level entry wrappers (add-l4-integral-implicit-nodes, Decision 3):
+# alpha-rename every L_4 binder once, differentiate, restore the names.
+# Recursive callers keep using .grad_expr / .grad_body_for_var unchanged.
+.grad_expr_top <- function(expr, var) {
+  ren <- .alpha_rename_binders(expr)
+  .restore_binder_names(.grad_expr(ren$expr, var), ren$map)
+}
+.grad_body_for_var_top <- function(body_expr, var) {
+  ren <- .alpha_rename_binders(body_expr)
+  .restore_binder_names(.grad_body_for_var(ren$expr, var), ren$map)
+}
+
 # .grad_body_for_var(body_expr, var) — build the gradient BODY AST for a
 # single variable `var`, applying the full Tier 1-5 fast-path dispatch chain.
 # `body_expr` must already be control-flow-checked and paren-stripped.
@@ -43,6 +58,26 @@ grad.default <- function(x, vars = NULL, ...) {
 # the single-variable and multi-variable paths of grad.function.
 .grad_body_for_var <- function(body_expr, var) {
   gexpr <- .grad_expr(body_expr, var)
+  base <- .grad_body_base(gexpr, var)
+  # Backend B (add-fused-jit-grad-backend, #2): route genuinely multi-pass
+  # fusable arithmetic gradients to the fused single-pass JIT kernel above a
+  # size threshold, falling back to `base` below threshold or on any
+  # compile/run failure. grad_expr() inspectability is unaffected — the
+  # symbolic gradient is stored separately in grad.function.
+  if (.jit_path_available() && .fused_should_fire(gexpr, var)) {
+    # Metal-eligible = the canonical `<scalar> * <var>` Metal handles; the fused
+    # window is then capped below metal_threshold (see .build_fused_body).
+    metal_eligible <- !is.null(.try_normalize_scalar_var_product(gexpr, var))
+    fused <- tryCatch(.build_fused_body(gexpr, var, base, metal_eligible),
+                      error = function(e) NULL)
+    if (!is.null(fused)) return(fused)
+  }
+  base
+}
+
+# .grad_body_base(gexpr, var) — pre-Backend-B fast-path dispatch chain (Tier
+# 1-5); returns the body AST, or the raw symbolic gradient on no match.
+.grad_body_base <- function(gexpr, var) {
   # Dispatch priority chain (Tier 1 strict → Tier 2a normalizer → Tier 2d
   # composite → Tier 2c scaled-elementwise → Tier 2c bare elementwise →
   # Tier 2e reciprocal → Tier 3b scalar-pow → generic R). All fast-path tiers
@@ -60,7 +95,7 @@ grad.default <- function(x, vars = NULL, ...) {
       # without `:::`.
       return(bquote(
         if (.metal_path_available() &&
-            length(.(canonical$var)) >= getOption("DefDiff.metal_threshold", 1e9L))
+            length(.(canonical$var)) >= .dat_opt_pos_num("DefDiff.metal_threshold", 1e9L))
           metal_scalar_mul(.(canonical$scalar), .(canonical$var))
         else
           fast_scalar_mul(.(canonical$scalar), .(canonical$var))
@@ -152,13 +187,31 @@ grad.function <- function(x, vars = NULL, ...) {
   formals(new_fn) <- formals(x)
   if (length(vars) == 1L) {
     # Single variable: bare-vector contract (unchanged).
-    body(new_fn) <- .grad_body_for_var(body_expr, vars)
+    body(new_fn) <- .grad_body_for_var_top(body_expr, vars)
+    # Preserve the symbolic gradient separately so grad_expr() can recover it
+    # regardless of the body's evaluation backend (the body may be a fast-path
+    # kernel call, not the readable AST). See grad_expr() and issue #3.
+    attr(new_fn, "grad_expr") <- .grad_expr_top(body_expr, vars)
   } else {
     # Multiple variables: one gradient body per variable, assembled into a
     # named list keyed by variable name (order preserved).
-    elements <- lapply(vars, function(vn) .grad_body_for_var(body_expr, vn))
+    elements <- lapply(vars, function(vn) .grad_body_for_var_top(body_expr, vn))
     names(elements) <- vars
     body(new_fn) <- as.call(c(list(quote(list)), elements))
+    sym <- lapply(vars, function(vn) .grad_expr_top(body_expr, vn))
+    names(sym) <- vars
+    attr(new_fn, "grad_expr") <- sym
+  }
+  if (.has_binder_call(body(new_fn))) {
+    # Generated bodies call `DefDiff::integral` / `DefDiff::implicit`, so no
+    # user binding of those names (function or variable) can capture them
+    # (verify #23 rounds 2–3c); base `::` itself is trusted like every other
+    # base operator a body uses. grad_expr() keeps the public names; the
+    # environment stays the user's. `body<-` rebuilds the closure and drops
+    # attributes, so re-attach.
+    sym_attr <- attr(new_fn, "grad_expr")
+    body(new_fn) <- .rewrite_binder_heads(body(new_fn))
+    attr(new_fn, "grad_expr") <- sym_attr
   }
   environment(new_fn) <- environment(x)
   new_fn
@@ -179,10 +232,10 @@ grad.call <- function(x, vars, ...) {
   rhs <- .strip_paren(x)
   if (length(vars) == 1L) {
     # Single variable: bare AST (unchanged).
-    return(.grad_expr(rhs, vars))
+    return(.grad_expr_top(rhs, vars))
   }
   # Multiple variables: named list of per-variable gradient ASTs.
-  result <- lapply(vars, function(vn) .grad_expr(rhs, vn))
+  result <- lapply(vars, function(vn) .grad_expr_top(rhs, vn))
   names(result) <- vars
   result
 }
@@ -258,10 +311,10 @@ grad.formula <- function(x, vars = NULL, ...) {
 
   if (length(vars) == 1L) {
     # Single variable: bare formula (unchanged), LHS preserved.
-    return(build_formula(.grad_expr(rhs_stripped, vars)))
+    return(build_formula(.grad_expr_top(rhs_stripped, vars)))
   }
   # Multiple variables: named list of per-variable formulas.
-  result <- lapply(vars, function(vn) build_formula(.grad_expr(rhs_stripped, vn)))
+  result <- lapply(vars, function(vn) build_formula(.grad_expr_top(rhs_stripped, vn)))
   names(result) <- vars
   result
 }

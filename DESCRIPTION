@@ -1,13 +1,14 @@
 Package: DefDiff
 Type: Package
 Title: DefDiff: Definable Differentiation for Vector Calculus with Language-Level Awareness
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Che", "Cheng", email = "lufee2005@gmail.com",
                   role = c("aut", "cre"))
 Description: Symbolic source-transformation differentiation for vector
-    calculus expressions with awareness of a four-tier first-order
+    calculus expressions with awareness of a five-tier first-order
     language hierarchy (L0 pure vector space, L1 inner product, L2 named
-    operators, L3 analytic scalar functions). Provides a closure-preserving
+    operators, L3 analytic scalar functions, L4 integral and implicit
+    binder nodes). Provides a closure-preserving
     gradient operator, a user-extensible generator catalog, and a
     three-layer verification module (syntactic, numeric, cross-strategy).
     Reference implementation accompanying the Definable Algebra Theory
@@ -19,6 +20,8 @@ SystemRequirements: macOS (Accelerate framework) for the optional vDSP
     fast-path backend; additionally a Metal SDK and a Metal-capable GPU for the
     optional Metal compute backend (used only above dat.metal_threshold). Both
     are optional; the package builds and runs base-R paths without them.
+Depends:
+    R (>= 4.0.0)
 Imports:
     stats,
     Rcpp

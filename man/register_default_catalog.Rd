@@ -11,6 +11,6 @@ Invisibly `TRUE`.
 }
 \description{
 Internal entry point for tests and reload. Wipes any user-added
-generators and restores the shipped default catalog (L_0 through L_3).
+generators and restores the shipped default catalog (L_0 through L_4).
 }
 \keyword{internal}

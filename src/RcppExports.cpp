@@ -184,6 +184,20 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dat_fused_apply
+Rcpp::NumericVector dat_fused_apply(SEXP kernel_ptr, Rcpp::NumericVector v, Rcpp::NumericVector scalars, int nthreads);
+RcppExport SEXP _DefDiff_dat_fused_apply(SEXP kernel_ptrSEXP, SEXP vSEXP, SEXP scalarsSEXP, SEXP nthreadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type kernel_ptr(kernel_ptrSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type v(vSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericVector >::type scalars(scalarsSEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(dat_fused_apply(kernel_ptr, v, scalars, nthreads));
+    return rcpp_result_gen;
+END_RCPP
+}
 // metal_scalar_mul_init
 bool metal_scalar_mul_init(std::string metallib_path);
 RcppExport SEXP _DefDiff_metal_scalar_mul_init(SEXP metallib_pathSEXP) {
@@ -224,6 +238,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_DefDiff_fast_scalar_div", (DL_FUNC) &_DefDiff_fast_scalar_div, 2},
     {"_DefDiff_fast_vec_mul", (DL_FUNC) &_DefDiff_fast_vec_mul, 2},
     {"_DefDiff_fast_vec_div", (DL_FUNC) &_DefDiff_fast_vec_div, 2},
+    {"_DefDiff_dat_fused_apply", (DL_FUNC) &_DefDiff_dat_fused_apply, 4},
     {"_DefDiff_metal_scalar_mul_init", (DL_FUNC) &_DefDiff_metal_scalar_mul_init, 1},
     {"_DefDiff_metal_scalar_mul", (DL_FUNC) &_DefDiff_metal_scalar_mul, 2},
     {NULL, NULL, 0}

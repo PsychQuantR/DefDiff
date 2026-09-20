@@ -19,6 +19,28 @@ TOL_VDSP <- 4 * .Machine$double.eps
 # body itself if it is not threshold-wrapped), so the Tier 1 dispatch assertions
 # stay meaningful and target the bare fast_scalar_mul call.
 .cpu_branch <- function(b) {
+  # Peel the fused-JIT wrapper to reach the <base> emission so the existing
+  # CPU-branch assertions keep checking the same dispatch. Two wrapper shapes:
+  #   auto-tune dispatch (#5): { .dat_s <- ...;
+  #     .dat_auto_dispatch(key, v, function() .dat_fused_try(...), function() <base>, metal) }
+  #   legacy (extend-fused-jit-single-pass): { ...; if (is.null(.dat_out)) .dat_out <- <base>; .dat_out }
+  if (is.call(b) && identical(b[[1L]], as.name("{"))) {
+    for (s in as.list(b)[-1L]) {
+      if (is.call(s) && is.symbol(s[[1L]]) &&
+          identical(as.character(s[[1L]]), ".dat_auto_dispatch")) {
+        base_thunk <- s[[5L]]                       # 4th arg = base = function() <base>
+        if (is.call(base_thunk) && identical(base_thunk[[1L]], as.name("function"))) {
+          b <- base_thunk[[3L]]                     # the function literal's body
+        }
+        break
+      }
+      if (is.call(s) && identical(s[[1L]], as.name("if")) &&
+          is.call(s[[2L]]) && identical(s[[2L]][[1L]], as.name("is.null"))) {
+        b <- s[[3L]][[3L]]                          # legacy `.dat_out <- <base>` -> <base>
+        break
+      }
+    }
+  }
   if (is.call(b) && identical(b[[1L]], as.name("if"))) b[[4L]] else b
 }
 
@@ -273,8 +295,9 @@ test_that("composite normalizer returns NULL for non-composite", {
 test_that("grad(sin(sum(v^2))) dispatches via outer-scalar fusion (Tier 2d)", {
   gf <- grad(function(v) sin(sum(v^2)))
   expect_true(is.call(body(gf)))
-  # Body is a { } block; last statement should be fast_scalar_mul call
-  b <- body(gf)
+  # The Tier 2d composite is now the fused wrapper's base fallback; peel the
+  # wrapper to reach it. Base is a { } block; last statement is fast_scalar_mul.
+  b <- .cpu_branch(body(gf))
   expect_identical(b[[1L]], as.name("{"))
   last_stmt <- b[[length(b)]]
   expect_true(is.call(last_stmt))
@@ -553,4 +576,20 @@ test_that("grad(sum(v^4)) and grad(sum(v^5)) dispatch correctly", {
   e5 <- function(v) NULL; body(e5) <- quote(sum(v^5))
   gf5 <- grad(e5)
   expect_equal(gf5(v), 5 * v^4, tolerance = TOL_VDSP)
+})
+
+test_that("fused-JIT branch: single-pass threaded above threshold, base intact (extend-fused-jit-single-pass)", {
+  skip_if(!DefDiff:::.jit_path_available())
+  withr::local_options(DefDiff.jit_threshold = 1000L)
+  # 2*v is now routed to the threaded fused kernel above the JIT threshold, with
+  # the single-kernel fast_scalar_mul preserved as the below-threshold/fallback path.
+  bd2 <- deparse(body(grad(function(v) sum(v^2))))
+  expect_true(any(grepl(".dat_fused_try", bd2, fixed = TRUE)))
+  expect_true(any(grepl("fast_scalar_mul", bd2, fixed = TRUE)))   # base path intact
+  # cos(v) is a per-element transcendental: not fusable, never fused.
+  expect_false(any(grepl(".dat_fused_try", deparse(body(grad(function(v) sum(sin(v))))), fixed = TRUE)))
+  # sum(v^3) -> 3*v^2 multi-pass: fused wrapper + base chained fallback intact.
+  bd <- deparse(body(grad(function(v) sum(v^3))))
+  expect_true(any(grepl(".dat_fused_try", bd, fixed = TRUE)))
+  expect_true(any(grepl("fast_vec_mul", bd, fixed = TRUE)))
 })

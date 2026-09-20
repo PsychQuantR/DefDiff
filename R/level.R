@@ -38,14 +38,19 @@ level <- function(expr) {
   if (!is.call(expr)) return("unknown")
 
   head_sym <- expr[[1L]]
-  if (!is.symbol(head_sym)) return("unknown")
-  fname <- as.character(head_sym)
+  # Generated L_4 bodies use `DefDiff::integral` heads; map them back.
+  l4_name <- .l4_head_name(head_sym)
+  if (!is.symbol(head_sym) && is.na(l4_name)) return("unknown")
+  fname <- if (!is.na(l4_name)) l4_name else as.character(head_sym)
 
   own <- .lookup_level(fname)
   if (is.na(own)) return("unknown")
 
   sub_levels <- character(0)
   for (i in seq_along(expr)[-1L]) {
+    # L_4 binder nodes bind their third element (a symbol); it is not a
+    # generator and must not be inferred as a subexpression.
+    if (.is_binder_head(fname) && i == 3L) next
     sub_levels <- c(sub_levels, .infer_level(expr[[i]]))
   }
 

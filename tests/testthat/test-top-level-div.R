@@ -66,7 +66,24 @@ test_that("Regression: sum(v^2) / 2 still uses constant-denominator fast path", 
   # not `(<da>*<b> - <a>*<db>) / <b>^2`.
   gf <- grad(function(v) sum(v^2) / 2)
   b <- body(gf)
-  # The body is the AST `<grad(sum v^2)> / 2`; top-level should be `/` with
+  # Single-pass fusable shapes (`(2*v)/2`) now carry the auto-tune dispatch wrapper
+  # (auto-tune dispatch #5): { .dat_s <- ...; .dat_auto_dispatch(key, v,
+  # fused_thunk, function() <base>, metal) }. Peel to the base thunk's body `<grad>/2`.
+  if (is.call(b) && identical(b[[1L]], as.name("{"))) {
+    for (s in as.list(b)[-1L]) {
+      if (is.call(s) && is.symbol(s[[1L]]) &&
+          identical(as.character(s[[1L]]), ".dat_auto_dispatch")) {
+        bt <- s[[5L]]                                   # 4th arg = base = function() <base>
+        if (is.call(bt) && identical(bt[[1L]], as.name("function"))) b <- bt[[3L]]
+        break
+      }
+      if (is.call(s) && identical(s[[1L]], as.name("if")) &&
+          is.call(s[[2L]]) && identical(s[[2L]][[1L]], as.name("is.null"))) {
+        b <- s[[3L]][[3L]]; break                       # legacy wrapper
+      }
+    }
+  }
+  # The base body is the AST `<grad(sum v^2)> / 2`; top-level should be `/` with
   # `2` literal as the second operand.
   expect_true(is.call(b))
   expect_identical(b[[1L]], quote(`/`))

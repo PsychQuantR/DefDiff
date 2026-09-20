@@ -57,6 +57,7 @@ hessian.function <- function(x, vars = NULL, ...) {
                      "`; only straight-line scalar expressions are supported."))
   }
   body_expr <- .strip_paren(body_expr)
+  .refuse_l4_nodes(body_expr, "hessian")
 
   if (length(vars) == 1L) {
     pattern <- .recognize_hessian_pattern(body_expr, vars)

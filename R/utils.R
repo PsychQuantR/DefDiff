@@ -11,7 +11,23 @@
   if (is.symbol(expr)) return(identical(as.character(expr), var))
   if (is.numeric(expr) || is.logical(expr) || is.character(expr)) return(FALSE)
   if (is.call(expr)) {
+    # L_4 binder nodes (integral / implicit): the third element is a bound
+    # symbol. An occurrence of `var` inside the body (second element) is bound
+    # when `var` equals that symbol and therefore not free; the bounds /
+    # interval (elements 4+) are always scanned. See l4_nodes.R, Decision 2.
+    binder <- .is_binder_call(expr)
+    if (binder) {
+      .check_binder_node(expr)
+      if (identical(as.character(expr[[3L]]), var)) {
+        for (i in seq_along(expr)[-c(1L, 2L, 3L)]) {
+          if (.contains_var(expr[[i]], var)) return(TRUE)
+        }
+        return(FALSE)
+      }
+    }
     for (i in seq_along(expr)[-1L]) {
+      if (binder && i == 3L) next
+      if (is.null(expr[[i]])) next
       if (.contains_var(expr[[i]], var)) return(TRUE)
     }
     return(FALSE)
@@ -45,9 +61,18 @@ parse_expr <- function(expr) {
 .control_flow_block <- function(expr) {
   blockers <- c("if", "for", "while", "repeat", "function", "<-", "=", "{")
   if (is.call(expr)) {
-    head <- as.character(expr[[1L]])
-    if (head %in% blockers) return(head)
+    if (is.symbol(expr[[1L]])) {
+      head <- as.character(expr[[1L]])
+      if (head %in% blockers) return(head)
+    } else {
+      # Compound / qualified head (e.g. `DefDiff::integral(...)` in a generated
+      # gradient body): scan the head as a subexpression instead of coercing
+      # it to a character vector (which would give a length-3 condition).
+      sub <- .control_flow_block(expr[[1L]])
+      if (!is.na(sub)) return(sub)
+    }
     for (i in seq_along(expr)[-1L]) {
+      if (is.null(expr[[i]])) next
       sub <- .control_flow_block(expr[[i]])
       if (!is.na(sub)) return(sub)
     }

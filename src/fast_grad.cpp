@@ -6,6 +6,8 @@
 
 #include <Rcpp.h>
 #include <vector>
+#include <thread>
+#include <algorithm>
 
 // Forward-declare vDSP_vsmulD instead of including <Accelerate/Accelerate.h>:
 // the full header defines `COMPLEX` as a typedef which collides with R's
@@ -92,14 +94,68 @@ Rcpp::NumericVector fast_scalar_mul(double s, Rcpp::NumericVector v) {
 //' @param v Numeric vector.
 //' @return Scalar double equal to sum(v^2).
 //' @export
+// ---- Threaded reduction support (add-threaded-reduction-kernels, #2) -------
+// Read an R option as a double, returning `dflt` when unset/NA. Never raises.
+static double dat_opt_double(const char* name, double dflt) {
+  SEXP val = Rf_GetOption1(Rf_install(name));
+  if (val == R_NilValue) return dflt;
+  double x = Rf_asReal(val);
+  return ISNAN(x) ? dflt : x;
+}
+
+// Worker count for threaded reductions: DefDiff.jit_threads option, else
+// min(8, hardware_concurrency()). Always >= 1.
+static int dat_reduce_workers() {
+  double t = dat_opt_double("DefDiff.jit_threads", -1.0);
+  int nt;
+  if (t >= 1.0) {
+    nt = static_cast<int>(t);
+  } else {
+    unsigned hw = std::thread::hardware_concurrency();
+    nt = (hw == 0u) ? 4 : static_cast<int>(std::min(hw, 8u));
+  }
+  return nt < 1 ? 1 : nt;
+}
+
+// Thread the reduction only at/above DefDiff.reduce_threshold (default 1e7)
+// with > 1 worker; below that the single-threaded vDSP path runs unchanged.
+static bool dat_reduce_threaded(R_xlen_t n) {
+  double thr = dat_opt_double("DefDiff.reduce_threshold", 1e7);
+  return static_cast<double>(n) >= thr && dat_reduce_workers() > 1;
+}
+
 // [[Rcpp::export]]
 double fast_sum_sq(Rcpp::NumericVector v) {
 #ifdef __APPLE__
-  double result = 0.0;
   R_xlen_t n = v.size();
-  if (n > 0) {
-    vDSP_svesqD(REAL(v), 1, &result, static_cast<vDSP_Length>(n));
+  if (n == 0) return 0.0;
+  const double* vp = REAL(v);
+  if (!dat_reduce_threaded(n)) {
+    double result = 0.0;
+    vDSP_svesqD(vp, 1, &result, static_cast<vDSP_Length>(n));
+    return result;
   }
+  // Parallel partial-reduction: each worker runs vDSP_svesqD on a disjoint
+  // slice into its own partial; the main thread sums the partials.
+  int nt = dat_reduce_workers();
+  if (static_cast<R_xlen_t>(nt) > n) nt = static_cast<int>(n);
+  std::vector<double> partials(static_cast<size_t>(nt), 0.0);
+  std::vector<std::thread> workers;
+  workers.reserve(static_cast<size_t>(nt));
+  R_xlen_t chunk = (n + nt - 1) / nt;
+  for (int t = 0; t < nt; ++t) {
+    R_xlen_t lo = static_cast<R_xlen_t>(t) * chunk;
+    R_xlen_t hi = std::min(n, lo + chunk);
+    if (lo >= hi) break;
+    workers.emplace_back([=, &partials]() {
+      double p = 0.0;
+      vDSP_svesqD(vp + lo, 1, &p, static_cast<vDSP_Length>(hi - lo));
+      partials[static_cast<size_t>(t)] = p;
+    });
+  }
+  for (auto& w : workers) w.join();
+  double result = 0.0;
+  for (double p : partials) result += p;
   return result;
 #else
   Rcpp::stop("fast_sum_sq: Apple Accelerate backend not available on this platform");
@@ -123,15 +179,44 @@ double fast_sum_sq(Rcpp::NumericVector v) {
 // [[Rcpp::export]]
 double fast_sum_pow(Rcpp::NumericVector v, int k) {
 #ifdef __APPLE__
-  double result = 0.0;
   R_xlen_t n = v.size();
-  if (n > 0) {
+  if (n == 0) return 0.0;
+  const double* vp = REAL(v);
+  const double kd = static_cast<double>(k);
+  if (!dat_reduce_threaded(n)) {
     int n_int = static_cast<int>(n);
     std::vector<double> powed(static_cast<size_t>(n));
-    std::vector<double> expo(static_cast<size_t>(n), static_cast<double>(k));
-    vvpow(powed.data(), expo.data(), REAL(v), &n_int);   // powed[i] = v[i]^k
+    std::vector<double> expo(static_cast<size_t>(n), kd);
+    vvpow(powed.data(), expo.data(), vp, &n_int);   // powed[i] = v[i]^k
+    double result = 0.0;
     vDSP_sveD(powed.data(), 1, &result, static_cast<vDSP_Length>(n));
+    return result;
   }
+  // Parallel partial-reduction: each worker allocates its own per-slice scratch
+  // for the vvpow output, then sums its slice; the main thread sums the partials.
+  int nt = dat_reduce_workers();
+  if (static_cast<R_xlen_t>(nt) > n) nt = static_cast<int>(n);
+  std::vector<double> partials(static_cast<size_t>(nt), 0.0);
+  std::vector<std::thread> workers;
+  workers.reserve(static_cast<size_t>(nt));
+  R_xlen_t chunk = (n + nt - 1) / nt;
+  for (int t = 0; t < nt; ++t) {
+    R_xlen_t lo = static_cast<R_xlen_t>(t) * chunk;
+    R_xlen_t hi = std::min(n, lo + chunk);
+    if (lo >= hi) break;
+    workers.emplace_back([=, &partials]() {
+      int m = static_cast<int>(hi - lo);
+      std::vector<double> powed(static_cast<size_t>(m));
+      std::vector<double> expo(static_cast<size_t>(m), kd);
+      vvpow(powed.data(), expo.data(), vp + lo, &m);
+      double p = 0.0;
+      vDSP_sveD(powed.data(), 1, &p, static_cast<vDSP_Length>(m));
+      partials[static_cast<size_t>(t)] = p;
+    });
+  }
+  for (auto& w : workers) w.join();
+  double result = 0.0;
+  for (double p : partials) result += p;
   return result;
 #else
   Rcpp::stop("fast_sum_pow: Apple Accelerate backend not available on this platform");

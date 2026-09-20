@@ -1,23 +1,21 @@
 ## benchmark_log.R
-## Community differentiation benchmark: the log-first data flow.
+## Community benchmark: log-parsing + leaderboard-rendering API.
 ##
-## The raw JSON run-log (one file per harness invocation) is the SOURCE OF
-## TRUTH; the long-format CSV is a derived projection produced by
-## `parse_benchmark_logs()`, and the README leaderboard is regenerated from the
-## CSV by `bench_render_leaderboard()`. See the `community-benchmark` spec.
+## The raw JSON run-log (one file per harness invocation, produced by the
+## harness in the PsychQuantR/DefDiff-benchmark repo) is the SOURCE OF TRUTH.
+## This package projects logs to a long-format CSV via `parse_benchmark_logs()`
+## and renders a leaderboard table via `bench_render_leaderboard()`; the harness
+## itself, its timing/provenance helpers, and the contribution flow live in the
+## sibling DefDiff-benchmark repo, not here.
 ##
 ## The log JSON shape is the frozen contract; the CSV schema is soft (it can
-## gain columns later by re-parsing historical logs), so the column set lives
-## in one place — `.bench_csv_columns()`.
+## gain columns later by re-parsing historical logs), so the column set lives in
+## one place — `.bench_csv_columns()`.
 
 ## Frozen schema version of the run-log JSON contract.
 .BENCH_SCHEMA_VERSION <- 1L
 
-## Version of the harness that emitted a log; bumped when timing methodology
-## changes in a way that makes older logs non-comparable.
-.BENCH_HARNESS_VERSION <- "0.1.0"
-
-## Marker comments delimiting the regenerated leaderboard region in the README.
+## Marker comments delimiting the regenerated leaderboard region in a README.
 .BENCH_LEADERBOARD_BEGIN <- "<!-- BENCHMARK-LEADERBOARD:BEGIN -->"
 .BENCH_LEADERBOARD_END   <- "<!-- BENCHMARK-LEADERBOARD:END -->"
 
@@ -34,132 +32,6 @@
     "harness_version", "system", "system_version", "operation",
     "problem_id", "n", "precision", "threads", "parallel_capable",
     "stage", "median_ms", "iqr_ms", "cv_pct", "reps")
-}
-
-# --- Provenance capture -----------------------------------------------------
-
-## Detect the CPU/SoC marketing name (e.g. "Apple M4 Max"). macOS-first,
-## best-effort elsewhere. Machine-sourced, never user-typed.
-.bench_detect_chip <- function() {
-  if (identical(Sys.info()[["sysname"]], "Darwin")) {
-    v <- tryCatch(system2("sysctl", c("-n", "machdep.cpu.brand_string"),
-                          stdout = TRUE, stderr = NULL),
-                  error = function(e) character())
-    if (length(v) && nzchar(v[[1L]])) return(v[[1L]])
-  }
-  unname(Sys.info()[["machine"]])
-}
-
-## Detect physical core count (the meaningful "max" thread level on Apple
-## Silicon). Falls back to logical-core detection off macOS.
-.bench_detect_cores <- function() {
-  if (identical(Sys.info()[["sysname"]], "Darwin")) {
-    v <- tryCatch(suppressWarnings(as.integer(
-           system2("sysctl", c("-n", "hw.physicalcpu"), stdout = TRUE, stderr = NULL))),
-         error = function(e) NA_integer_)
-    if (length(v) && !is.na(v[[1L]])) return(v[[1L]])
-  }
-  as.integer(tryCatch(parallel::detectCores(logical = FALSE),
-                      error = function(e) NA_integer_))
-}
-
-## Detect installed RAM in whole GB (macOS via hw.memsize; NA elsewhere).
-.bench_detect_ram_gb <- function() {
-  if (identical(Sys.info()[["sysname"]], "Darwin")) {
-    b <- tryCatch(suppressWarnings(as.numeric(
-           system2("sysctl", c("-n", "hw.memsize"), stdout = TRUE, stderr = NULL))),
-         error = function(e) NA_real_)
-    if (length(b) && !is.na(b[[1L]])) return(round(b[[1L]] / 1024^3))
-  }
-  NA_real_
-}
-
-## Detect the BLAS/LAPACK backing (collapses Apple Accelerate to "Accelerate").
-.bench_detect_blas <- function() {
-  lib <- tryCatch(La_library(), error = function(e) "")
-  if (!nzchar(lib)) lib <- tryCatch(unname(extSoftVersion()[["BLAS"]]),
-                                    error = function(e) "")
-  if (grepl("Accelerate", lib, ignore.case = TRUE)) return("Accelerate")
-  if (nzchar(lib)) basename(lib) else NA_character_
-}
-
-## Detect a human-readable OS version string.
-.bench_detect_os <- function() {
-  r <- tryCatch(utils::sessionInfo()$running, error = function(e) NULL)
-  if (!is.null(r) && nzchar(r)) return(r)
-  paste(Sys.info()[["sysname"]], Sys.info()[["release"]])
-}
-
-## Build the `meta` provenance block for a run-log. Hardware and environment
-## fields are auto-detected from the system, not supplied by the caller; only
-## `contributor` and `date` may be overridden (defaulting to the OS user and
-## the current time).
-bench_capture_provenance <- function(contributor = NULL, date = NULL,
-                                     systems = list()) {
-  list(
-    date        = .or(date, format(Sys.time(), "%Y-%m-%dT%H:%M:%S%z")),
-    contributor = .or(contributor, unname(Sys.info()[["user"]])),
-    hardware    = list(chip   = .bench_detect_chip(),
-                       cores  = .bench_detect_cores(),
-                       ram_gb = .bench_detect_ram_gb()),
-    env         = list(os_version = .bench_detect_os(),
-                       r_version  = as.character(getRversion()),
-                       blas       = .bench_detect_blas()),
-    systems     = systems,
-    sessionInfo = paste(utils::capture.output(utils::sessionInfo()),
-                        collapse = "\n")
-  )
-}
-
-## Construct a sortable, unique run id: timestamp + short random suffix. The
-## timestamp is passed in (the runner supplies `Sys.time()`); the suffix uses
-## the session RNG so repeated runs on one machine never collide.
-bench_new_run_id <- function(now = Sys.time(), suffix = NULL) {
-  ts <- format(now, "%Y%m%dT%H%M%OS3%z")
-  if (is.null(suffix)) {
-    suffix <- paste(sample(c(0:9, letters), 4L, replace = TRUE), collapse = "")
-  }
-  paste0(ts, "-", suffix)
-}
-
-# --- Timing primitives ------------------------------------------------------
-#
-# Same methodology as inst/benchmarks/comprehensive-ad-comparison.R: bench::mark
-# over a pre-allocated input with median / IQR / CV, falling back to a
-# replicate-based timer when bench is unavailable. Shared here so the community
-# harness reuses the discipline rather than forking a second timing stack.
-
-## Time a steady-state operation over `reps` iterations. Returns median_ms,
-## iqr_ms, cv_pct, and the realized rep count.
-bench_time_repeated <- function(thunk, reps = 50L) {
-  if (requireNamespace("bench", quietly = TRUE)) {
-    res <- tryCatch(
-      bench::mark(thunk(), iterations = reps, check = FALSE, filter_gc = FALSE),
-      error = function(e) NULL)
-    if (!is.null(res)) {
-      times_ms <- as.numeric(res$time[[1L]]) * 1000
-      q <- stats::quantile(times_ms, c(0.25, 0.5, 0.75), na.rm = TRUE)
-      return(list(median_ms = unname(q[[2L]]),
-                  iqr_ms    = unname(q[[3L]] - q[[1L]]),
-                  cv_pct    = 100 * stats::sd(times_ms, na.rm = TRUE) /
-                                    mean(times_ms, na.rm = TRUE),
-                  reps      = length(times_ms)))
-    }
-  }
-  ts <- replicate(reps, {
-    t0 <- proc.time()[["elapsed"]]; thunk(); (proc.time()[["elapsed"]] - t0) * 1000
-  })
-  list(median_ms = stats::median(ts), iqr_ms = NA_real_, cv_pct = NA_real_,
-       reps = length(ts))
-}
-
-## Time a one-shot stage (build / import / first_eval / jit_compile) once.
-## Startup stages are deliberately measured, not discarded as warm-up.
-bench_time_once <- function(thunk) {
-  t0 <- proc.time()[["elapsed"]]
-  thunk()
-  list(median_ms = (proc.time()[["elapsed"]] - t0) * 1000,
-       iqr_ms = NA_real_, cv_pct = NA_real_, reps = 1L)
 }
 
 # --- Log -> CSV parser ------------------------------------------------------
@@ -183,9 +55,8 @@ bench_time_once <- function(thunk) {
 #' @export
 #' @examples
 #' \dontrun{
-#' parse_benchmark_logs(
-#'   system.file("benchmarks/community-logs", package = "DefDiff"),
-#'   out_csv = "community-benchmark.csv")
+#' # logs accumulate in the PsychQuantR/DefDiff-benchmark repo
+#' parse_benchmark_logs("community-logs", out_csv = "community-benchmark.csv")
 #' }
 parse_benchmark_logs <- function(logs_dir, out_csv = NULL) {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
@@ -257,8 +128,6 @@ parse_benchmark_logs <- function(logs_dir, out_csv = NULL) {
 
 # --- Leaderboard regeneration -----------------------------------------------
 
-## Render the steady-state (`eval`) rows of the CSV as a markdown leaderboard
-## table. Empty input yields a friendly placeholder line.
 ## Neutralize markdown-significant characters in contributor-controlled string
 ## fields before they are interpolated into the README table. Run-logs are
 ## PR-contributed (untrusted), so a crafted field (table pipes, newlines, code
@@ -273,11 +142,11 @@ parse_benchmark_logs <- function(logs_dir, out_csv = NULL) {
   ifelse(nchar(x) > max_len, paste0(substr(x, 1L, max_len - 3L), "..."), x)
 }
 
+## Render the steady-state (`eval`) rows of the CSV as a markdown leaderboard
+## table. Empty input yields a friendly placeholder line.
 .bench_leaderboard_markdown <- function(df) {
   if (nrow(df) == 0L) {
-    return(paste0("_No community submissions yet. Run ",
-                  "`Rscript inst/benchmarks/run-community-benchmark.R --append` ",
-                  "and open a PR adding your log file._"))
+    return("_No community submissions yet. Run the benchmark harness and open a pull request adding your run-log._")
   }
   ev <- df[!is.na(df$stage) & df$stage == "eval", , drop = FALSE]
   if (nrow(ev) == 0L) ev <- df

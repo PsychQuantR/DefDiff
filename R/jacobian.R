@@ -110,6 +110,7 @@ jacobian.function <- function(x, vars = NULL, ...) {
                      "`; only straight-line vector-output expressions are supported."))
   }
   body_expr <- .strip_paren(body_expr)
+  .refuse_l4_nodes(body_expr, "jacobian")
   rows <- .jacobian_rows(body_expr, var)
   new_fn <- function() NULL
   formals(new_fn) <- formals(x)
@@ -134,6 +135,7 @@ jacobian.call <- function(x, vars, ...) {
               paste0("Expression contains unsupported construct `", blocker, "`."))
   }
   rhs <- .strip_paren(x)
+  .refuse_l4_nodes(rhs, "jacobian")
   rows <- .jacobian_rows(rhs, vars[[1L]])
   .jacobian_matrix_ast(rows, vars[[1L]])
 }
